@@ -1,0 +1,57 @@
+\begin{thebibliography}{1}
+
+\bibitem{Carlsson2009}
+G.~Carlsson.
+\newblock Topology and data.
+\newblock {\em Bulletin of the American Mathematical Society}, 46(2):225--308,
+  2009.
+
+\bibitem{Chazal2009}
+F.~Chazal, D.~Cohen-Steiner, L.~J. Guibas, F.~Memoli, and S.~Y. Oudot.
+\newblock {G}romov-{H}ausdorff stable signatures for shapes using persistence.
+\newblock In M.~Alexa and M.~Kazhdan, editors, {\em Eurographics Symposium on
+  Geometry Processing}, volume~28, 2009.
+
+\bibitem{Edelsbrunner2010}
+H.~Edelsbrunner and J.~Harer.
+\newblock {\em Computational topology: an introduction}.
+\newblock American Mathematical Society, 2010.
+
+\bibitem{Grossmann2002}
+R.~Grossmann, N.~Kiryati, and R.~Kimmel.
+\newblock Computational surface flattening: A voxel-based approach.
+\newblock {\em IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  24:433--411, 2002.
+
+\bibitem{Heimann2009}
+T.~Heimann and H~Meinzer.
+\newblock Statistical shape models for 3{D} medical image segmentation: A
+  review.
+\newblock {\em Medical Image Analysis}, 13(4):543--563, 2009.
+
+\bibitem{Konishi2013}
+Y.~Konishi.
+\newblock Tactile stimulation with {K}inesiology tape alleviates muscle
+  weakness attributable to attenuation of la afferents.
+\newblock {\em Journal of Science and Medicine in Sport}, 16:45--48, 2013.
+
+\bibitem{Lepore2008}
+F.~Lepore, C.~Brun, Yi-Yu Chou, and Ming-Chang Chiang.
+\newblock Generalized tensor-based morphometry of {HIV/AIDS} using multivariate
+  statistics on deformation tensors.
+\newblock {\em IEEE Transactions on Medical Imaging}, 27:129--141, 2008.
+
+\bibitem{Osorio2013}
+J.~Osorio, G.L. Vairo, G.D. Rozea, P.J. Bosha, R.L. Millard, D.F. Aukerman, and
+  W.~J. Sebastianelli.
+\newblock The effects of two therapeutic patellofemoral taping techniques on
+  strength, endurance, and pain responses.
+\newblock {\em Physical Therapy in Sport}, 14:199--206, 2013.
+
+\bibitem{OSullivan2011}
+D.~O'Sullivan and S.~P. Bird.
+\newblock Utilization of kinesio taping for fascia unloading.
+\newblock {\em International Journal of Athletic Therapy and Training},
+  16:21--27, 2011.
+
+\end{thebibliography}

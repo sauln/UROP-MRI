@@ -1,0 +1,47 @@
+This is BibTeX, Version 0.99c (TeX Live 2009/Debian)
+The top-level auxiliary file: UROP-MRI.aux
+The style file: plain.bst
+Database file #1: UROP-MRI.bib.bib
+Warning--can't use both volume and number fields in Chazal2009
+You've used 9 entries,
+            2118 wiz_defined-function locations,
+            564 strings with 5693 characters,
+and the built_in function-call counts, 3067 in all, are:
+= -- 283
+> -- 168
+< -- 1
++ -- 66
+- -- 56
+* -- 231
+:= -- 537
+add.period$ -- 27
+call.type$ -- 9
+change.case$ -- 53
+chr.to.int$ -- 0
+cite$ -- 10
+duplicate$ -- 103
+empty$ -- 231
+format.name$ -- 56
+if$ -- 625
+int.to.chr$ -- 0
+int.to.str$ -- 9
+missing$ -- 10
+newline$ -- 48
+num.names$ -- 20
+pop$ -- 46
+preamble$ -- 1
+purify$ -- 45
+quote$ -- 0
+skip$ -- 67
+stack$ -- 0
+substring$ -- 181
+swap$ -- 12
+text.length$ -- 1
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 34
+warning$ -- 1
+while$ -- 26
+width$ -- 10
+write$ -- 100
+(There was 1 warning)

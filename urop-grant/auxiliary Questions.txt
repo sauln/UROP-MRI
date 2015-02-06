@@ -1,0 +1,18 @@
+
+Project Description (500 characters max)
+
+This project is to design and implement a shape analysis routine to provide quantitative evidence of the affects of Kinesio Tape in the subcutaneous region.  
+I will identify and evaluate methods of sequential shape analysis, pilot multiple methods, and characterize the usefulness of the varied methods within the context of MR image analysis.  The goals are to develop a novel routine to analyze the sequential change in size and shape of subcutaneous region affected by Kinesio Tape. 
+
+
+Significance of your project (2-3 lines) [Why is this research or creative project important]
+
+
+This project will be the first quantitative study of the underlying mechanical affects of Kinesio Tape. Results could have large impact on the Kinesio Tape industry. Additionally, this study is expected to a provide general solution for quantitative assessment of morphological changes that could ultimately have broad implications for diagnostic and therapeutic outcomes beyond the current project.  
+
+
+You responsibilities for project (500 characters max)
+
+
+I will be responsible for the literature review, design of the analysis methods, and the implementation of these methods.  Dr. Mileyko will help me design the new methods. It is responsibility to implement the methods into a routine capable of completing the analysis. I will work closely with Dr. Lozanoff to analyze the images and refine the methods to fit the application.  I will prepare the report detailing the literature review, the methods designed, and the results of the analysis. 
+

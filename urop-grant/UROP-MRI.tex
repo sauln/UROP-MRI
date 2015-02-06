@@ -1,0 +1,152 @@
+\documentclass[ letterpaper, 12 pt, conference]{ieeeconf}  % Comment this line out if you need a4paper
+
+\IEEEoverridecommandlockouts                        
+\overrideIEEEmargins                                      % Needed to meet printer requirements.
+
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{cite}
+\usepackage{url}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{amsmath}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{units}
+\usepackage{wrapfig} % Wraps text round images
+\usepackage{epstopdf}
+\usepackage{amsmath}
+\usepackage{listings}    
+\usepackage{hyperref}
+\usepackage{acronym}
+\usepackage{multicol}
+
+
+\acrodef{KT}{Kinesio Tape}
+\acrodef{ROI}{region of interest}
+\acrodef{KRS}{Department of Kinesiology and Rehabilitation Science}
+\acrodef{ABP}{Department of Anatomy, Biochemistry \& Physiology}
+\acrodef{HDRS}{Hawaii Diagnostic Radiography Services}
+
+
+\newtheorem{definition}{Definition} 
+
+\DeclareMathOperator{\diff}{diff}
+\DeclareMathOperator{\adv}{adv}
+\DeclareMathOperator{\card}{card}
+
+
+
+\title{\LARGE  Numerical methods for analysis of effects of Kinesio Tape on the subcutaneous compartments of the thigh}%
+\author{by Nathaniel Saul \\ Advisor: Dr. Yuriy Mileyko} 
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+\pagestyle{empty}
+
+\section{Inquiry Statement}  
+
+ \ac{KT} is made from elastic cotton designed to stretch up to 40\% its static length. When the tape is applied to the skin it recoils and pulls on the surface. It is highly breathable and can be kept on for upwards of four days. \ac{KT} gained popularity following the 2008 Olympics in Beijing and is now commonly used by athletes at all levels of training and competition.   Manufacturers claim that applications of the tape can decrease pain from injuries, prevent injuries, and provide increased performance of the muscles directly below the tape.     
+
+These claimed benefits could be a result of the tape exerting a pressure that expands the space deep under the skin.  This expansion would potentially restore epidermal tissue homeostasis while increasing fluid movement, diminish pain by decreasing pressure on associated receptors, and possibly facilitate improved tensile properties of the deep fascia enveloping muscles. A few short-term studies have been conducted that addressed the subjective responses of test subjects using \ac{KT} \cite{Konishi2013}\cite{Osorio2013} \cite{OSullivan2011} but currently, no studies have been conducted concerning the underlying mechanism and functional effects of the \ac{KT}.
+
+A collaborative effort including expertise from the Department of Mathematics, \ac{ABP}, \ac{KRS}, and the \ac{HDRS} at St. Francis Hospital has been organized to address this lack of experimental evidence. We hypothesize that the form of the subcutaneous compartment of the thigh is altered as a result of KT application in human subjects. To test this hypothesis, the research team will analyze MR images of the area affected by the tape. 
+
+Currently, there are no well-defined methods for quantitatively analyzing the effects of the \ac{KT}.  This project focuses on an important subcomponent of the larger collaborative research project: to research, evaluate, and apply novel analysis methods to identification and quantification of changes resulting from \ac{KT} use.  
+
+The project aims to develop a novel approach to analysing the region affected by \ac{KT} and to implement the approach in a software application.  This software will quantify the change of size and/or shape of the subcutaneous compartment of an individual and compare changes between individuals over the course of the study.
+This project will, in the first instance, provide a quantitative approach that specifically determines whether KT repositions the subcutaneous compartment in a fashion that could improve fluid dynamics improving an athlete's performance.  However, this study is expected to provide a more general solution for quantitative assessment of morphological changes derived from advanced medical images such as MR, CT, spiral CT, etc, that could ultimately have broad implications for diagnostic and therapeutic outcomes beyond the current project.  
+
+
+
+%  It will help answer the question of whether application of \ac{KT} alters the subcutaneous compartment consistent with the claims of its users and manufacturers. 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Objectives/Methods}
+
+Over the next three months, researchers at \ac{KRS} and St. Francis will collect time-series MR images of students using the tape.  Next, under guidance from Dr. Mileyko, I will develop novel methods to analyze these images and implement them in a computer application.  Finally, Dr. Lozanoff from the \ac{ABP} and I will use this new tool to analyze the MR images and draw conclusions about the effects of \ac{KT}.
+
+\subsection{Image Collection}
+
+Researchers at \ac{KRS} and \ac{HDRS} will collect MR images of 20 participants with iliotibial band syndrome and 20 healthy participants for this study.  A customized length of \ac{KT} will be applied to the thigh with 15\% tension according to the Kinesio EDF Taping Manual. Small oil beads will be placed at standardized areas of the thigh to provide reference points on the MR images.  Subjects will be scanned at time 0 ($T_0$), 24 hours ($T_1$) and 48 hours ($T_2$) following placement of the tape. Once scanning is completed, additional landmarks will be identified and the desired region for analysis will be segmented. This aspect of the project is currently under IRB review.
+
+\subsection{Shape Analysis Methods}
+
+The next portion of the project will be the entire focus of this proposal.  It will involve the development the shape analysis methods and their implementation in a software application.   The software will test whether there is a shape and/or size change in the \ac{ROI} and quantify this change in a meaningful way.  Additionally, it will quantify the change in \ac{ROI} for an individual (intra-personal) and between individuals (inter-personal) over time.  
+
+We will complete this in three steps.  First, Dr. Mileyko and I will complete a literature review of current methods.  We will then choose which methods could be particularly promising and potentially design new methods based on some of Dr. Mileyko's past work.  Finally, we will implement the methods in a software application and test their usefulness for the analysis of these MR images. 
+
+\subsubsection{Literature Review}
+
+We will first complete an exhaustive literature review of current state-of-the-art and industry-standard methods.   Shape analysis is a common problem found in many domains, including Computer Vision, Computational Geometry, Topology, and Medical Imaging.   We will search for any relevant techniques that could help quantify changes in shape and size.   
+
+\subsubsection{Choice of methods}
+
+The next phase of this project will be to choose the methods with the most potential and frame them in a way that can address our needs.  We will implement multiple different methods to cross-examine our results thoroughly.  Additionally, the choice of method is affected by the kinds of changes in shape we see.  Some methods are useful for capturing affine changes, while some are designed for non-affine changes.  It is impossible to tell what changes (if any) will be present, and thus impossible to choose a best method before the analysis begins.  
+
+
+
+
+The most obvious method to implement is a landmark based \emph{linear regression}.  This industry standard compares how predetermined landmarks change over time \cite{Heimann2009}.  This is a simple method that may confirm or reject the null hypothesis (that no change in shape will occur) with a sufficient degree of confidence. Since it does not utilize the entire \ac{ROI}, it will not be able to quantify the shape change in a meaningful way.  
+
+The \emph{Hausdorff Metric} could be used to compare the change in shapes because it reduces the comparison to a single number and is generally efficiently computable \cite{Chazal2009}.  This metric incorporates the entire \ac{ROI} to calculate the maximum difference between two shapes.
+
+Some nonaffine changes in the shape, such as the formation of wrinkles or other distortions under the skin, could be quantified particularly well with the \emph{persistent homology of sublevel sets}.  The homology of a shape captures the number of voids, tunnels, and disjoint pieces \cite{Carlsson2009} \cite{Edelsbrunner2010}.  By looking at the evolution of the homology of sublevel sets, we would observe wrinkles and distortions at different places in the \ac{ROI}.
+
+\emph{Tensor based morphology} is prominently used in the study of brain morphology to analyze images across both people and time.  This method spatially normalizes each image, creating a deformation field that can quantify the differences between the images \cite{Grossmann2002} \cite{Lepore2008}. To employ this approach we need to develop a method to ``standardize" different meshes.
+
+\subsubsection{Implementation}
+
+Once the images are collected and the methods are reviewed, we will implement and experiment with the various methods of analysis.  We may develop a new method based on the existing approaches. 
+
+Our first goal will be to test the null hypothesis;  that is, \emph{KT causes no change in the subcutaneous region of the thigh}. We will test this by first implementing the linear regression method mentioned above.  This method will potentially give us a good estimate on the likeliness of the null hypothesis.
+
+To improve our degree of confidence and to quantify the type of changes we will next implement methods utilizing the whole \ac{ROI} instead of a just few landmarks.  This will be an iterative process, as we do not yet know which methods will be useful or feasible.  We will base our choice on the initial results from the linear regression analysis and a qualitative analysis of the images.   Our goal is to use the entire \ac{ROI} for our analysis since this preserves the most information about the shape, and thus should tell us the most about the change in shape.  
+
+%\subsubsection{Analysis}
+Both the analysis and method development will happen iteratively and simultaneously.  I will work closely with Dr. Lozanoff to decide which methods are useful and which are not based on the results they give.  It is possible some methods might return too much information about the change in shape, and some methods might return too little information; neither scenario will provide conclusive results.  Because of this, the analysis and the development must happen in tandem.  
+
+%Once both the development and analysis are complete, I will draft a final report detailing the literature review, the chosen methods and their implementation, and the results of our analysis.  The developed software tool will then be disseminated appropriately.
+
+\section{Timeline}
+
+{\bf November - January}:  Researchers in the \ac{KRS} will collect the MR images.  They expect to have images ready to analyze in January.  During this time, I will continue exploring possible methods of analysis with Dr. Mileyko. 
+
+{\bf January - February}:  The UROP funding is released and I can begin work.  I will complete an exhaustive literature review and a comparison of the potential methods.
+
+{\bf February - April}:  Dr. Mileyko and I will chose the best methods to use and I will implement the chosen methods.
+
+{\bf April - May}:  I will conclude the development of the software and will complete a report detailing the literature review, the chosen methods, and the implementation.
+
+{\bf May 8$^{th}$}: I will present the project at the UROP Spring Symposium.
+
+
+\section{Applicants Role}
+
+This project is a collaborative effort across several UH Manoa units including expertise from the Department of Mathematics, \ac{ABP}, \ac{KRS} and the \ac{HDRS} at St. Francis Hospital.   \ac{KRS} and the \ac{HDRS} will collect the MR images. 
+
+My role will be to conduct the literature review, design the analysis methods, and implement these methods in a software application.  Dr. Mileyko and Dr. Lozanoff will both lend their expertise to guide me on the literature review and the design of the methods.  From then on, it will be my responsibility to implement the new approaches into a routine capable of completing the analysis.   Throughout the implementation process, I will work closely with Dr. Lozanoff to analyze the images and refine the methods.  The entire team will help draw conclusions as to the biological effects of \ac{KT}. Finally, I will prepare the report detailing the literature review, the methods designed, and the results of the analysis.  This report will be presented at the UROP Spring Symposium.  %After the project has concluded, I will disseminate the software in an appropriate manner.
+
+\section{Biographical Sketch}
+
+I am a Mathematics major and expect to graduate in December 2015. Over the summer, I completed a directed reading course with Dr. Mileyko.  During this course, I learned about a number of data analysis techniques used in the field of Computational Topology.  I found the methods and theory I learned during this time extremely fascinating and I hope to pursue this channel of research further.
+
+Over the same summer I completed a UROP project developing a ocean plume simulation for robotic tracking with Dr. Bingham.  This UROP experience was very successful, with multiple papers incorporating my work submitted to major conferences. Before this, I completed a research project funded by the College of Engineering.  During this project, I developed an application that provides real-time visualization of robotic behavior and is currently in use by multiple University robotics labs. 
+
+As for my previous experience, I am very interested in developing mathematical applications to imaging and robotics and I plan to apply to graduate schools with strong programs in these domains.  This research will provide me with valuable experience in image processing and shape analysis techniques, in mathematics research, and in working on multi-disciplinary research teams. 
+
+\section{Itemized Budget and Justification}
+
+This proposal requests \$4,320 for a stipend. I will devote a full 20 hours per week for each of the 16 weeks of the semester and 40 hours during Spring break.  This amounts to 360 hours paid at the standard rate of \$12 per hour.
+
+This project requires no equipment nor materials, but will be very labor intensive.  All the consumables involved in collecting the MR images will be supplied by \ac{KRS}, along with rental of the MRI facilities.   Dr. Lozanoff at the \ac{ABP} has agreed to provide a computer and workspace for my use during the project.
+
+I will not require IRB certification since I will be working with anonymous images and will not have access to any participant information.
+
+\bibliography{UROP-MRI.bib}{}
+\bibliographystyle{plain}
+
+\end{document}

@@ -1,0 +1,59 @@
+we need to first generate 2 or 3 dimensional data.
+
+then we generate all the statistics concerning this data.
+
+then we fit a normal curve to the data.
+
+then we see how good this normal curve works.
+
+Then we confirm or deny that the data fits the normal curve. 
+
+
+
+compute a p value.  - i think it is normal with this probability
+
+test for multivariant normality.
+
+
+
+look at pairwise difference over 3 time steps for a single patient 
+with random noise (gaussia)
+
+compute pairwise differences between landmarks
+look at the point cloud-  this point cloud should have a gaussian distribution around
+0.  should be close to zero..  norm of each difference
+
+claim - will be close to zero with high probability (p-value)
+
+
+
+first with gaussian random noise with mean 0, then introduce drift.
+
+play with different drifts and different variances.  20 patients
+20 experiences
+normal noise with 0 mean and then normal noise with nonero mean
+
+
+look at the norm of the 24 differences. norm of each point,  
+make a profile of each patient.
+
+
+focus on visualization
+
+
+
+then look at the difference between landmarks.. 
+pairwise distances-- 8 choose 2 length vector (28)
+look at differences betweent the vectors.  
+
+understand how these differences behave.
+
+
+what c+++ toools
+
+focus on generating lots of data..
+
+
+
+
+

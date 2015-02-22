@@ -15,35 +15,43 @@ by Subhash Lele and Joan Richtmeier
 
 """
 
-import matplotlib as mpl
-from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import matplotlib.pyplot as plt
-
-
-from scipy.spatial import distance
+import random
 import scipy
 
-import pylab as P
-from numpy import linalg as LA
-from numpy import random as ran
 
-
-np.set_printoptions(2)
-
-
-import maths
 import patientGen
-import visualization
+import manager
+
+
 
 
 
 def EDMA():
-    control, test = patientGen.patientList(0.01)
+    
+    drift = 0.2
+    control, test = patientGen.patientList(drift)
+    
+    
     aveCont = euclideanDistanceMatrix( coordinateWiseAverageOfShapes(control) )
     aveTest = euclideanDistanceMatrix( coordinateWiseAverageOfShapes(test) )
     D, Dbar = averageFormDifferenceMatrix(aveCont,aveTest)
-    fourTtest(D, Dbar)
+    T4 = fourTtest(D, Dbar)
+    
+    
+    T4s = bootstrappingTheNullDistribution(control,test)
+    
+    print "Our T4: %s" %T4
+    print "The random permuation distribution: %s" %np.mean(T4s)
+    plt.clf()
+    fig = plt.hist(T4s)
+    
+    ymax = max(np.histogram(T4s)[0])
+    plt.plot((T4, T4), (0, ymax*1.15), 'k-')
+    plt.title("EDMA with drift %s and sigma: 0.1"%drift)
+    plt.show()
+    
 
 def coordinateWiseAverageOfShapes(listOfShapes):
     suma = np.zeros(listOfShapes[0].x.shape)
@@ -71,17 +79,17 @@ def averageFormDifferenceMatrix(a,b):
     for j in range(0, a.shape[0]-1):
         for i in range(j+1, a.shape[0]-1):
             D[i,j] = a[i,j] / b[i,j]
-            
-    Dbar = calcDbar(D)
-    print "woohoo"
+         
+         
+         
+         
+    #try to put 1 instead of the mask.
+         #look to make sure the masks are only over the diagonal
     
     D = np.ma.masked_equal(D,0.0)
+    Dbar = D.flatten().mean()
     return D, Dbar
 
-def calcDbar(D):
-    D = np.ma.masked_equal(D,0.0)
-    return D.flatten().mean()
-    
     
 def fourTtest(D, Dbar): 
     D = np.ma.compressed(D)
@@ -93,5 +101,35 @@ def fourTtest(D, Dbar):
         # max_ij Dij(X,Y) - min_ij D_ij(X,Y)    
     T4 = np.max(D)/np.min(D)
         # max Dij(X,Y)/ min Dij(X,Y)    
-    print T1, T2, T3, T4
+    #print T1, T2, T3, T4
+    return T4  
     
+def bootstrappingTheNullDistribution(X, Y):
+    '''
+    we want to compare our T4 value for these two groups
+    with many T4 values for these 2 groups shuffled up in random ways
+    
+    '''
+    
+    n = X+Y
+    T4s = []
+    
+    for x in range(1000):
+        random.shuffle(n)
+        
+        Xstar = n[0:20]
+        Ystar = n[20:40]
+        #now do all the EDMA stuff with these 2 sets,
+        #and track the T4 value.
+        aveCont = euclideanDistanceMatrix( coordinateWiseAverageOfShapes(Xstar) )
+        aveTest = euclideanDistanceMatrix( coordinateWiseAverageOfShapes(Ystar) )
+        D, Dbar = averageFormDifferenceMatrix(aveCont,aveTest)
+        T4s.append(fourTtest(D, Dbar))
+    
+    return T4s
+
+        
+    
+    
+if __name__ == "__main__":
+    manager.main()

@@ -1,17 +1,13 @@
 we need to first generate 2 or 3 dimensional data.
 
 then we generate all the statistics concerning this data.
-
 then we fit a normal curve to the data.
-
 then we see how good this normal curve works.
-
 Then we confirm or deny that the data fits the normal curve. 
 
 
 
 compute a p value.  - i think it is normal with this probability
-
 test for multivariant normality.
 
 

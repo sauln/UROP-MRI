@@ -12,6 +12,11 @@ math and statistical functions
 
 '''
 
+
+import numpy as np
+from numpy import linalg as LA
+
+
 def choose(n,k):
     return np.math.factorial(n)/( np.math.factorial(n-k)*np.math.factorial(k))
 
@@ -36,6 +41,35 @@ def differences(P):
 def L2metric(A,B):
     return LA.norm(A - B)
     
+def returnNormsVector(diff):
+    '''takes a shape(specifically a shape representing the differences between 
+    landmarks) and returns a vector of the norms of each of these differences
+    '''
+    norm = np.zeros((diff.shape[0],1))
+    for each, n  in zip(diff, range(0, norm.shape[0])): 
+        norm[n] = LA.norm(each)
+        
+    return norm 
+    
+def meanOfNorms(diff):
+    '''
+    probably an unnecessary function, but it returns the mean of a vector,
+    specifically intended to be the mean of the vector returned from returnNormsVector
+    '''
+    return returnNormsVector(diff).mean()
+
+def doPCA(scatt):
+    '''
+    attempted to do some pca analysis on the data.  
+    '''
+    from sklearn.decomposition import PCA
+    pca = PCA(n_components=3)
+    pca.fit(scatt)
+    print(pca.explained_variance_ratio_) 
+    print type(pca)
+    print pca.components_[0]
+    plt.plot([0,0,0], pca.components_[0])
+    plt.plot([0,0,0], pca.components_[1])
     
     
     

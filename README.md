@@ -16,19 +16,19 @@ Dr. Mileyko is advising and guiding me throughout this process.
 
 ##Outcomes
 
-*literature review of current shape analysis techniques. 
-*implementation of some modern methods that should be applicable to this project
-*examination of the chosen methods
-*analysis of affects of Kinesio Tape
-*written and oral report
+ * literature review of current shape analysis techniques. 
+ * implementation of some modern methods that should be applicable to this project
+ * examination of the chosen methods
+ * analysis of affects of Kinesio Tape
+ * written and oral report
 
 
 
 ##Implementation Details
 Most of the project is written in Python.
 
-*General and Ordinary Procrustes Methods are handled by Procupy.
-*R is responsible for the Hotelling T2 testing (still in development)
+ * General and Ordinary Procrustes Methods are handled by Procupy.
+ * R is responsible for the Hotelling T2 testing (still in development)
 
 
 

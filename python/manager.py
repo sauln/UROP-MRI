@@ -13,6 +13,11 @@ import experiments
 import tTest
 
 import patientGen
+
+import Rwriter
+
+
+
     
 def example_procrustes(): 
     '''
@@ -36,8 +41,16 @@ def example_procrustes():
     
 def main():
     
+    test = patientGen.genSet(0.1, 10)
+    testShapes = [s.x for s in test]   
+    mean_shape, aligned_shapes = ourProcrustes.ourProcrustes(np.asarray(testShapes))
     
-    tTest.someTtestTesting()
+    
+    
+    Rwriter.shapesToR(aligned_shapes)
+    
+
+    #Test.someTtestTesting()
     
     #experiments.someTtestTesting()
     #EDMA.EDMA()

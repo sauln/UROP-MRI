@@ -23,7 +23,7 @@ import objectReader
 
 
 ## we need to set up the data
-f = r"..\image\rawlandmarks.txt"
+f = r"..\image\original\rawlandmarks.txt"
 
 
 

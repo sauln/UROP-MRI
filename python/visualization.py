@@ -42,9 +42,27 @@ def heatMap(x,y):
     plt.show()
     
     
-def histo(x, c):
+    
+    
+    
+def plot_f_distro(n,p):
+    fig, ax = plt.subplots(1, 1)
+    
+    x = np.linspace(sp.stats.f.ppf(0.01, p, n-p), 
+                    sp.stats.f.ppf(0.99, p, n-p), 100)
+    ax.plot(x, sp.stats.f.pdf(x, p, n-p), 
+            'r-', lw=5, alpha=0.6, label='f pdf')
+    #ax.plot( (np.mean(ts), np.mean(ts)),(0,1)) 
+    plt.show()
+    
+    
+    
+def histo(x, c = 'r', t=' '):
+    fig, ax = plt.subplots(1, 1)
     n, bins, patches = P.hist(x, 20, normed=1, histtype='bar')
     P.setp(patches, 'facecolor', c, 'alpha', 0.75)
+    #plt.title(t)
+    plt.title(t)
     plt.show()
 
 def complicatedHisto(x, dists, var, mean):

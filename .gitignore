@@ -43,4 +43,11 @@ Temporary Items
 .apdisk
 
 
+# Stuff I don't want added:
+Debug/
+Release/
+urop-grant/
 *.pyc
+*sdf
+*.suo
+*.ipch

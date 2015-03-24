@@ -11,15 +11,22 @@
 #error adjacency_list_io.hpp has not been ported to work with VC++
 #endif
 
-#include <boost/graph/adjacency_list_io.hpp>
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/property_map/property_map.hpp>
-
-//#include "adjacency_list.h"
 #include <iostream>
 #include <string>
 #include <fstream>
 #include <iomanip>
+
+
+
+
+#include <boost/graph/graph_traits.hpp>
+#include <boost/graph/adjacency_list_io.hpp>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/property_map/property_map.hpp>
+#include <boost/graph/dijkstra_shortest_paths.hpp>
+
+//#include "adjacency_list.h"
+
 using namespace boost;
 
 
@@ -30,6 +37,9 @@ struct Weight { double weight; };
 
 typedef adjacency_list < setS, vecS, undirectedS,
 	V, property < edge_weight_t, double >, no_property, vecS > default_Graph;
+
+typedef graph_traits < default_Graph >::vertex_descriptor vertex_descriptor;
+
 typedef graph_traits<default_Graph>::edge_iterator EdgeIterator;
 typedef std::pair<EdgeIterator, EdgeIterator> EdgePair;
 
@@ -99,9 +109,6 @@ int naive_closest_vertex(default_Graph g, V p){
 	}
 
 
-	
-
-
 	std::cout << std::fixed;
 	std::cout << std::setprecision(4);
 
@@ -141,8 +148,10 @@ int demo_graph_io()
 		write_vertex(g, i, a, b, c);
 	}
 
-	int face_check = 0;
+
+
 	//read and save each triangle as 3 edges
+	int face_check = 0;
 	int q, w, e, r;
 
 	while (infile >> q >> w >> e >> r){
@@ -164,9 +173,23 @@ int demo_graph_io()
  
 	//now find the shortest path between these points: use Djikstra
 	//dijkstra_shortest_path
-	EdgePair ep;
+	//EdgePair ep;
 
-	Weight* weight = nullptr;
+	//Weight* weight = nullptr;
+
+	//we want to create a property_map from each edge to a distance
+	//property_map<default_Graph, edge_weight_t>::type u
+	//	= get(edge_weight, g);
+
+	vector<vertex_descriptor> p(num_vertices(g));
+
+
+	vertex_descriptor s = vert_1;
+	dijkstra_shortest_paths(g, s, predecessor_map(boost::make_iterator_property_map(p.begin(), get(boost::vertex_index, g))).
+		distance_map(boost::make_iterator_property_map(d.begin(), get(boost::vertex_index, g))));
+	
+
+
 	//for (ep = edges(g); ep.first != ep.second; ++ep.first)
 	//{
 		//weight = get(ep.first, g);
@@ -178,21 +201,6 @@ int demo_graph_io()
 	return 0;
 }
 
-
-int test_add_edge(){
-	//it seems that the add edge for the undirected graph is still adding multiple edges..
-	default_Graph g(10);
-
-	std::cout << num_vertices(g);
-
-	add_edge(0, 1, g);
-
-	std::cout << num_edges(g);
-
-	add_edge(0, 1, g);
-	std::cout << num_edges(g);
-	return 0;
-}
 
 
 

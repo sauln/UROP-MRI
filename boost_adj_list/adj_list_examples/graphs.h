@@ -25,13 +25,13 @@ typedef double Weight;
 typedef property<edge_weight_t, Weight> WeightProperty;
 
 
-
 typedef adjacency_list < setS, vecS, undirectedS,
 	V, WeightProperty, no_property, vecS > default_Graph;
 
 
 typedef graph_traits < default_Graph >::vertex_descriptor vertex_descriptor;
-typedef graph_traits<default_Graph>::edge_iterator EdgeIterator;
+typedef graph_traits < default_Graph >::vertex_iterator vertex_iterator;
+typedef graph_traits <default_Graph>::edge_iterator EdgeIterator;
 typedef std::pair<EdgeIterator, EdgeIterator> EdgePair;
 
 //typedef property_map < default_Graph, vertex_name_t >::type NameMap;

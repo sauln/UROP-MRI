@@ -1,6 +1,9 @@
 #ifndef TOOLS
 #define TOOLS
 
+#include "graphs.h"
+
+
 #include <boost/array.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list_io.hpp>
@@ -8,9 +11,16 @@
 #include <boost/property_map/property_map.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 
+int naive_closest_vertex(default_Graph g, V p);
 
-
-
+int naive_closest_test(const default_Graph & g, V p ){
+	// this is a really shoddy test that can be expanded. 
+	// currently, it was written solely to check that naive closest was returning the correct index. 
+	// surprisingly, v(19) is closer to (5,5,5) than v(24).
+	std::cout << diff_V(g[19], p) << std::endl;
+	std::cout << diff_V(g[24], p) << std::endl;
+	return 0;
+}
 int naive_closest_vertex(default_Graph g, V p){
 	// cycle through each vertex and save the one closest to the point
 	// return the index for that vertex

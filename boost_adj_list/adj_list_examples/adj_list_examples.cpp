@@ -17,14 +17,18 @@
 #include <iomanip>
 #include <vector>
 
-
+#include <boost/graph/copy.hpp>
 #include <boost/array.hpp>
+//#include <boost/graph/subgraph.hpp>
+#include <boost/graph/filtered_graph.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list_io.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/property_map/property_map.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
+#include <boost/graph/connected_components.hpp>
 
+#include <boost/graph/graph_utility.hpp>
 
 
 #include "graphs.h"
@@ -33,7 +37,28 @@
 
 using namespace boost;
 
+template <typename TGraph>
+struct vertex_id_filter
+{
+	//add an attribute for the vertex_separator
+	std::vector<vertex_descriptor> vertex_separator;
+	int size_of_vs;
 
+	//predicate to check if the vertex is in our vertex_separator.  Intended to remove all 
+	//vertices in separator.
+	bool operator()(const typename boost::graph_traits<TGraph>::vertex_descriptor& v) const
+	{
+		//for unknown reason iterators are not working- resort to this ghetto way of checking 
+		for (int i = 0; i < size_of_vs; i++)
+			if (vertex_separator[i] == v)
+				return false;
+
+		return true; //default to returning true if v is not in the separator. (keep those not in separator
+
+
+
+	}
+};
 
 
 int dijkstra_test(default_Graph & g, V start, V end)
@@ -42,7 +67,7 @@ int dijkstra_test(default_Graph & g, V start, V end)
 	int vert_2 = naive_closest_vertex(g, end);
 
 
-	// Create things for Dijkstra
+	// Create output storage for Dijkstra
 	std::vector<vertex_descriptor> predecessors(num_vertices(g)); // To store parents
 	std::vector<Weight> distances(num_vertices(g)); // To store distances
 
@@ -59,16 +84,92 @@ int dijkstra_test(default_Graph & g, V start, V end)
 
 
 	// Output results
-	std::cout << "distances and parents:" << std::endl;
+	//std::cout << "distances and parents:" << std::endl;
 	//NameMap nameMap = boost::get(boost::vertex_name, g);
 
-	BGL_FORALL_VERTICES(v, g, default_Graph)
-	{
-		std::cout << "distance(" << indexMap[vert_1] << ", " << indexMap[v] << ") = " << distanceMap[v] << ", ";
-		std::cout << "predecessor(" << indexMap[v] << ") = " << indexMap[predecessorMap[v]] << std::endl;
-	}
+	//BGL_FORALL_VERTICES(v, g, default_Graph)
+	//{
+	//	std::cout << "distance(" << indexMap[vert_1] << ", " << indexMap[v] << ") = " << distanceMap[v] << ", ";
+	//	std::cout << "predecessor(" << indexMap[v] << ") = " << indexMap[predecessorMap[v]] << std::endl;
+	//}
+	//std::cout << distanceMap[vert_2] << std::endl;
+	//std::cout << indexMap[predecessorMap[vert_2]];
+
 
 	std::cout << "distance of (" << indexMap[vert_1] << ", " << indexMap[vert_2] << ") = " << distanceMap[vert_2] << std::endl;
+
+
+	/* Create vertex separator */
+	std::vector<vertex_descriptor> vertex_separator;
+	std::vector<vertex_descriptor>::iterator it;
+
+	int v = vert_2;
+	vertex_separator.push_back(v);
+	while (v != predecessorMap[v]){
+		v = predecessorMap[v];
+		vertex_separator.push_back(v);
+	}
+
+
+	/* Print vertex separator */
+	for (it = vertex_separator.begin(); it != vertex_separator.end(); it++){
+		std::cout << *it << " -> ";
+	}
+	std::cout << std::endl;
+
+	/* Create a filtered graph of original graph without the vertex separator */
+
+	std::cout << "Filter out vertex separator" << std::endl;
+
+	//initialize filter -- turning this into a class would make this a little more automatic.
+	vertex_id_filter<default_Graph> filter;
+	filter.vertex_separator = vertex_separator;
+	filter.size_of_vs = vertex_separator.size();
+
+	//creating filtered  graph
+	typedef boost::filtered_graph<default_Graph, boost::keep_all, vertex_id_filter<default_Graph> > FilteredGraphType;
+	FilteredGraphType filtered_graph(g, boost::keep_all(), filter); // (graph, EdgePredicate, VertexPredicate)
+
+
+	print_graph(filtered_graph);
+
+	
+	/* Find all connected components of subgraph w/0 vertex separator */
+
+	//now take filtered_graph and calculate all the connected components.
+	std::vector<int> component(num_vertices(filtered_graph));
+	int num = connected_components(filtered_graph, &component[0]);
+
+	std::cout << "There are " << num << " connected components" << std::endl;
+
+	std::vector<int>::size_type i;
+	std::cout << "Total number of components: " << num << std::endl;
+	for (i = 0; i != component.size(); ++i)
+		std::cout << "Vertex " << i << " is in component " << component[i] << std::endl;
+	std::cout << std::endl;
+
+	/* Now we want to create separate graphs for each of these */
+
+
+
+
+	/* Add vertex separator back to connected components as boundary */
+
+
+
+
+
+	
+
+
+
+
+
+
+
+
+
+
 	return 0;
 
 
@@ -157,6 +258,9 @@ int main(int argc, char* argv[])
 	V start, end;
 	write_point(start, -5, -5, -5);
 	write_point(end, 5, 5, 5);
+
+
+
 	dijkstra_test(g, start, end);
 
 

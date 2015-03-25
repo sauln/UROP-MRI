@@ -15,197 +15,74 @@
 #include <string>
 #include <fstream>
 #include <iomanip>
+#include <vector>
 
 
-
-
+#include <boost/array.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list_io.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/property_map/property_map.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 
-//#include "adjacency_list.h"
+
+
+#include "graphs.h"
+#include "tools.h"
+
 
 using namespace boost;
 
 
-struct V {double x;double y;double z;};
-typedef std::pair<std::size_t, std::size_t> E;
-struct Weight { double weight; };
 
 
-typedef adjacency_list < setS, vecS, undirectedS,
-	V, property < edge_weight_t, double >, no_property, vecS > default_Graph;
-
-typedef graph_traits < default_Graph >::vertex_descriptor vertex_descriptor;
-
-typedef graph_traits<default_Graph>::edge_iterator EdgeIterator;
-typedef std::pair<EdgeIterator, EdgeIterator> EdgePair;
-
-
-int write_point(V &p, double x, double y, double z){
-	p.x = x; p.y = y; p.z = z;
-	return 0;
-}
-int write_vertex(default_Graph &g, int position, double x, double y, double z){
-	write_point(g[position], x, y, z);
-	return 0;
-}
-
-double diff_V(V p, V q){
-	double sum = sqrt(pow((p.x - q.x), 2) + pow((p.y - q.y), 2) + pow((p.z - q.z), 2));
-	return sum;
-
-}
-
-int add_edge_N(int in, int out, default_Graph &g){
-	double w = diff_V(g[in], g[out]);
-
-	if (in <= out)
-		add_edge(in, out, w, g);
-	else
-		add_edge(out, in, w, g);
-	return 0;
-
-}
-
-int read_vertex(default_Graph g, int position){
-	std::cout << "Vertex is located at: (" << g[position].x << "," << g[position].y << "," <<g[position].z << ")\n";
-	return 0;
-}
-
-
-int print_all_edges(default_Graph g){
-
-	graph_traits<default_Graph>::out_edge_iterator e, e_end;
-	graph_traits<default_Graph>::vertex_descriptor s;
-
-
-	for (unsigned int i = 0; i < num_vertices(g); i++){
-		s = vertex(i, g);
-		for (boost::tie(e, e_end) = out_edges(s, g); e != e_end; ++e)
-			std::cout << "(" << source(*e, g)
-			<< "," << target(*e, g) << ")" << std::endl;
-	}
-
-	return 0;
-}
-
-
-int naive_closest_vertex(default_Graph g, V p){
-	// cycle through each vertex and save the one closest to the point
-	// return the index for that vertex
-
-	double min_norm = 100;
-	double tmp_norm;
-	int min_ind = -1;
-	for (int i = 0; i < num_vertices(g); i++){
-		tmp_norm = diff_V(p, g[i]);
-		if (tmp_norm < min_norm){
-			min_norm = tmp_norm;
-			min_ind = i;
-		}
-	}
-
-
-	std::cout << std::fixed;
-	std::cout << std::setprecision(4);
-
-	std::cout << "\nminimum difference from " << p.x << ", " << p.y << ", " << p.z << std::endl
-		<< "is: " << min_norm
-		<< "\nFound from node: " << min_ind
-		<< "\nAt location:" << g[min_ind].x << ", " << g[min_ind].y << ", " << g[min_ind].z << std::endl;
-
-	return min_ind;
-}
-
-int demo_graph_io()
+int dijkstra_test(default_Graph & g, V start, V end)
 {
-	/*  This function will be a test for reading in the edges from a file and creating a graph out of it   */
-	int num_verts;
+	int vert_1 = naive_closest_vertex(g, start);
+	int vert_2 = naive_closest_vertex(g, end);
 
-	char* filename = "../surface/surface.off";
-	for (int i = 0; i < 9; i++)
+
+	// Create things for Dijkstra
+	std::vector<vertex_descriptor> predecessors(num_vertices(g)); // To store parents
+	std::vector<Weight> distances(num_vertices(g)); // To store distances
+
+	IndexMap indexMap = get(vertex_index, g);
+	PredecessorMap predecessorMap(&predecessors[0], indexMap);
+	DistanceMap distanceMap(&distances[0], indexMap);
+
+	// Compute shortest paths from v0 to all vertices, and store the output in predecessors and distances
+	// boost::dijkstra_shortest_paths(g, v0, boost::predecessor_map(predecessorMap).distance_map(distanceMap));
+	// This is exactly the same as the above line - it is the idea of "named parameters" - you can pass the
+	// prdecessor map and the distance map in any order.
+	dijkstra_shortest_paths(g, vert_1, distance_map(distanceMap).predecessor_map(predecessorMap));
+
+
+
+	// Output results
+	std::cout << "distances and parents:" << std::endl;
+	//NameMap nameMap = boost::get(boost::vertex_name, g);
+
+	BGL_FORALL_VERTICES(v, g, default_Graph)
 	{
-		std::cout << filename[i];
-	}
-	std::cout << "filename is " << filename << "\n";
-
-	std::ifstream infile(filename);
-	std::string line; getline(infile, line);
-
-
-	double a, b, c, d;
-	infile >> num_verts >>b >> c;
-	std::cout << "num vertices: " << num_verts << " and triangles: " << b << std::endl;
-	
-	default_Graph g(num_verts);
-
-	//read and save vertex properties
-	for (int i = 0; i < num_verts; i++){
-		infile >> a >> b >> c;
-		write_vertex(g, i, a, b, c);
+		std::cout << "distance(" << indexMap[vert_1] << ", " << indexMap[v] << ") = " << distanceMap[v] << ", ";
+		std::cout << "predecessor(" << indexMap[v] << ") = " << indexMap[predecessorMap[v]] << std::endl;
 	}
 
-
-
-	//read and save each triangle as 3 edges
-	int face_check = 0;
-	int q, w, e, r;
-
-	while (infile >> q >> w >> e >> r){
-		face_check++;
-		add_edge_N(w, e, g);
-		add_edge_N(e, r, g);
-		add_edge_N(r, w, g);
-	}
-
-	std::cout << "number of edges: " << num_edges(g) << "\nNumber of vertices: " << num_vertices(g) << std::endl;
-	
-	// now we want to choose a point and find the closest point to a landmark
-	V landmark_1, landmark_2;
-	write_point(landmark_1, -5, -5, -5);
-	write_point(landmark_2, 5, 5, 5);
-	int vert_1 = naive_closest_vertex(g, landmark_1);
-	int vert_2 = naive_closest_vertex(g, landmark_2);
-
- 
-	//now find the shortest path between these points: use Djikstra
-	//dijkstra_shortest_path
-	//EdgePair ep;
-
-	//Weight* weight = nullptr;
-
-	//we want to create a property_map from each edge to a distance
-	//property_map<default_Graph, edge_weight_t>::type u
-	//	= get(edge_weight, g);
-
-	vector<vertex_descriptor> p(num_vertices(g));
-
-
-	vertex_descriptor s = vert_1;
-	dijkstra_shortest_paths(g, s, predecessor_map(boost::make_iterator_property_map(p.begin(), get(boost::vertex_index, g))).
-		distance_map(boost::make_iterator_property_map(d.begin(), get(boost::vertex_index, g))));
-	
-
-
-	//for (ep = edges(g); ep.first != ep.second; ++ep.first)
-	//{
-		//weight = get(ep.first, g);
-		//std::cout << " \n All of the edge weights \n";
-		//std::cout << weight->weight << std::endl;
-		// Get the two vertices that are joined by this edge...
-	//}
-
+	std::cout << "distance of (" << indexMap[vert_1] << ", " << indexMap[vert_2] << ") = " << distanceMap[vert_2] << std::endl;
 	return 0;
+
+
+
+
+
 }
 
 
 
 
 
-int demo_Graph()
+
+/*int demo_Graph()
 {
 
 	
@@ -261,9 +138,9 @@ int demo_Graph()
 	std::cout << "graph g1 from file " <<  "\n"
 		<< write(g, property<int, edge_weight_t>())
 		<< std::endl;
-	*/
+	
 	return 0;
-}
+}*/
 
 
 
@@ -271,15 +148,19 @@ int demo_Graph()
 
 int main(int argc, char* argv[])
 {
-	std::cout << "There were " << argc << " parameters!!\n";
-	// argv is an array containing same;
-	for (int i = 0; i<argc; i++)
-		std::cout << "Parameter " << i << " was " << argv[i] << "\n";
+	default_Graph g;
+	char* filename = "../surface/surface.off";
 
-	//io_Graph(argv[1]);
-	//demo_Graph();
-	demo_graph_io();
-	//test_add_edge();
+	g = create_graph(filename);
+	
+
+	V start, end;
+	write_point(start, -5, -5, -5);
+	write_point(end, 5, 5, 5);
+	dijkstra_test(g, start, end);
+
+
+
 
 	int h;
 	std::cin >> h;

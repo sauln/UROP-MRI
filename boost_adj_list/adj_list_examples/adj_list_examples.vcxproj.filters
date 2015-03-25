@@ -27,6 +27,12 @@
     <ClInclude Include="adjacency_list_io.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="tools.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="graphs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

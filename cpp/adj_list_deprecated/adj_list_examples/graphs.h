@@ -17,29 +17,64 @@
 
 using namespace boost;
 
+
+
+
+
+
+
+
+/* Properties for default graph */
 struct V { double x; double y; double z; };
 typedef std::pair<std::size_t, std::size_t> E;
-
 typedef double Weight;
-//struct Weight { double weight; };
 typedef property<edge_weight_t, Weight> WeightProperty;
 
 
 typedef adjacency_list < setS, vecS, undirectedS,
 	V, WeightProperty, no_property, vecS > default_Graph;
 
-
+/* Descriptors and iterators */
 typedef graph_traits < default_Graph >::vertex_descriptor vertex_descriptor;
 typedef graph_traits < default_Graph >::vertex_iterator vertex_iterator;
 typedef graph_traits <default_Graph>::edge_iterator EdgeIterator;
 typedef std::pair<EdgeIterator, EdgeIterator> EdgePair;
 
-//typedef property_map < default_Graph, vertex_name_t >::type NameMap;
+/* Property maps for Dijkstra's shortest path */
 typedef property_map < default_Graph, vertex_index_t >::type IndexMap;
 typedef iterator_property_map < vertex_descriptor*, IndexMap, vertex_descriptor, vertex_descriptor& > PredecessorMap;
 typedef iterator_property_map < Weight*, IndexMap, Weight, Weight& > DistanceMap;
 
 
+
+
+/* Predicate and filter for the separator filter */
+template <typename TGraph>
+struct vertex_id_filter
+{
+	//add an attribute for the vertex_separator
+	std::vector<vertex_descriptor> vertex_separator;
+	int size_of_vs;
+
+	//predicate to check if the vertex is in our vertex_separator.  Intended to remove all 
+	//vertices in separator.
+	bool operator()(const typename boost::graph_traits<TGraph>::vertex_descriptor& v) const
+	{
+		//for unknown reason iterators are not working- resort to this ghetto way of checking 
+		for (int i = 0; i < size_of_vs; i++)
+			if (vertex_separator[i] == v)
+				return false;
+
+		return true; //default to returning true if v is not in the separator. (keep those not in separator
+	}
+};
+
+typedef filtered_graph<default_Graph, keep_all, vertex_id_filter<default_Graph> > FilteredGraphType;
+
+
+
+/* Interface for graph functions */
+/* One day these might be turned into a class */
 int read_vertex(default_Graph g, int position);
 int write_vertex(default_Graph &g, int position, double x, double y, double z);
 int write_point(V &p, double x, double y, double z);
@@ -92,6 +127,10 @@ int write_point(V &p, double x, double y, double z){
 	p.x = x; p.y = y; p.z = z;
 	return 0;
 }
+int read_vertex(default_Graph g, int position){
+	std::cout << "Vertex is located at: (" << g[position].x << "," << g[position].y << "," << g[position].z << ")\n";
+	return 0;
+}
 int write_vertex(default_Graph &g, int position, double x, double y, double z){
 	write_point(g[position], x, y, z);
 	return 0;
@@ -111,10 +150,6 @@ int add_edge_N(int in, int out, default_Graph &g){
 		add_edge(out, in, w, g);
 	return 0;
 
-}
-int read_vertex(default_Graph g, int position){
-	std::cout << "Vertex is located at: (" << g[position].x << "," << g[position].y << "," << g[position].z << ")\n";
-	return 0;
 }
 int print_all_edges(default_Graph g){
 

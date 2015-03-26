@@ -27,9 +27,17 @@ using namespace boost;
 
 
 /* Properties for default graph */
-struct V { double x; double y; double z; };
+struct V { 
+	double x; 
+	double y; 
+	double z; 
+
+	//bool operator=(const my_data_type& other) const { return my_i < other.my_i; }
+
+};
 typedef std::pair<std::size_t, std::size_t> E;
 typedef double Weight;
+typedef int Name;
 typedef property<edge_weight_t, Weight> WeightProperty;
 
 
@@ -82,27 +90,38 @@ int write_vertex(default_Graph &g, int position, double x, double y, double z);
 int write_point(V &p, double x, double y, double z);
 default_Graph create_graph(char* filename);
 double diff_V(V p, V q);
+V diff_direction(V a, V b);
 int print_all_edges(default_Graph g);
 int add_edge_N(int in, int out, default_Graph &g);
+int print_point(V &p);
 
 
+V project_ish(double scale, double portion, V direction, double dir_scale, V a);
+V project_ish(double scale, double portion, V direction, double dir_scale, V a)
+{
 
+	std::cout << "Scale: " << scale << std::endl
+		<< "portion: " << portion << std::endl
+		<< "dir_scale: " << dir_scale << std::endl;
+	std::cout << "Direction: " << std::endl;
+	print_point(direction);
+	std::cout << "Start: " <<  std::endl;
+	print_point(a);
+		 
+	V n;
+	double scaling =  portion / scale ;
+	n.x = scaling * (direction.x / dir_scale) + a.x;
+	n.y = scaling * (direction.y / dir_scale) + a.y;
+	n.z = scaling * (direction.z / dir_scale) + a.z;
 
+	return n;
 
+}
 
 default_Graph create_graph(char* filename)
 {
 	int		num_verts;
 	double	a, b, c, d;
-
-	for (int i = 0; i < 9; i++)
-	{
-		std::cout << filename[i];
-	}
-
-	//std::cout << "filename is " << filename << "\n";
-
-
 
 	std::ifstream infile(filename);
 	
@@ -115,6 +134,7 @@ default_Graph create_graph(char* filename)
 	//read and save vertex properties
 	for (int i = 0; i < num_verts; i++){
 		infile >> a >> b >> c;
+		//write_vertex(graph, index, x_coord, y_coord, z_coord);
 		write_vertex(g, i, a, b, c);
 	}
 
@@ -137,6 +157,7 @@ int read_vertex(default_Graph g, int position){
 	return 0;
 }
 int write_vertex(default_Graph &g, int position, double x, double y, double z){
+
 	write_point(g[position], x, y, z);
 	return 0;
 }
@@ -145,6 +166,24 @@ double diff_V(V p, V q){
 	return sum;
 
 }
+
+
+V diff_direction(V a, V b){
+	/*unfortunately, V is of length 3*/
+
+	double norm = diff_V(a, b);
+	V sum;
+	sum.x = (a.x - b.x) / norm;
+	sum.y = (a.y - b.y) / norm;
+	sum.z = (a.z - b.z) / norm;
+
+
+	return sum;
+}
+
+
+
+
 int add_edge_N(int in, int out, default_Graph &g){
 	//Adds edge with ordered vertices and euclidean distance weight
 	double w = diff_V(g[in], g[out]);
@@ -171,6 +210,18 @@ int print_all_edges(default_Graph g){
 
 	return 0;
 }
+int print_point(V &p){
+	std::cout << "Point is (" << p.x << ", " << p.y << ", " << p.z << ")" << std::endl;
+	return 0;
+}
 
 
+int print_all_vertices(default_Graph g){
+	
+	for (unsigned int i = 0; i < num_vertices(g); i++)
+		print_point(g[i]);
+
+	return 0;
+
+}
 #endif

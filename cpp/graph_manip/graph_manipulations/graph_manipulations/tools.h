@@ -40,25 +40,27 @@ int naive_closest_vertex(default_Graph g, V p){
 	std::cout << std::fixed;
 	std::cout << std::setprecision(4);
 
-	std::cout << "\nminimum difference from " << p.x << ", " << p.y << ", " << p.z << std::endl
-		<< "is: " << min_norm
-		<< "\nFound from node: " << min_ind
-		<< "\nAt location:" << g[min_ind].x << ", " << g[min_ind].y << ", " << g[min_ind].z << std::endl;
+	//std::cout << "\nminimum difference from " << p.x << ", " << p.y << ", " << p.z << std::endl
+	//	<< "is: " << min_norm
+	//	<< "\nFound from node: " << min_ind
+	//	<< "\nAt location:" << g[min_ind].x << ", " << g[min_ind].y << ", " << g[min_ind].z << std::endl;
 
 	return min_ind;
 }
 
 
-int find_vertex_separator(default_Graph & g, V start, V end, std::vector<vertex_descriptor> &vertex_separator){
 
+int find_shortest_path(default_Graph & g, V start, V end, 
+						std::vector<vertex_descriptor> &predecessors, 
+						std::vector<Weight> &distances, 
+						std::vector<vertex_descriptor> &vertex_separator){
+
+	//split this into two smaller functions
 	//find vertex index for start andend 
 	vertex_descriptor vert_1 = naive_closest_vertex(g, start);
 	vertex_descriptor vert_2 = naive_closest_vertex(g, end);
 
 
-	// Create output storage for Dijkstra
-	std::vector<vertex_descriptor> predecessors(num_vertices(g)); // To store parents
-	std::vector<Weight> distances(num_vertices(g)); // To store distances
 
 	// Create maps for output for Dijkstra
 	IndexMap indexMap = get(vertex_index, g);
@@ -68,8 +70,7 @@ int find_vertex_separator(default_Graph & g, V start, V end, std::vector<vertex_
 	// Compute shortest paths from vert_1 to all vertices
 	dijkstra_shortest_paths(g, vert_1, distance_map(distanceMap).predecessor_map(predecessorMap));
 	//std::cout << "distance of (" << indexMap[vert_1] << ", " << indexMap[vert_2] << ") = " << distanceMap[vert_2] << std::endl;
-
-
+	
 	/* Create vertex separator - the shortest path from vert_1 to vert_2 */
 	std::vector<vertex_descriptor>::iterator it;
 	int v = vert_2;

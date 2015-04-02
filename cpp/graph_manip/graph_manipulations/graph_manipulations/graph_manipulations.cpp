@@ -1,6 +1,9 @@
 // graph_manipulations.cpp : Defines the entry point for the console application.
 //
 
+
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "stdafx.h"
 //#include "adjacency_list_io.h"
 
@@ -17,9 +20,13 @@
 #include <iomanip>
 #include <vector>
 
+
+
+//*******************
+// BOOST libraries --- some of these are not used anymore
+//*******************
 #include <boost/graph/copy.hpp>
 #include <boost/array.hpp>
-//#include <boost/graph/subgraph.hpp>
 #include <boost/graph/filtered_graph.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list_io.hpp>
@@ -27,8 +34,18 @@
 #include <boost/property_map/property_map.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 #include <boost/graph/connected_components.hpp>
-
 #include <boost/graph/graph_utility.hpp>
+
+
+//************************
+// CGAL Libraries
+//************************
+#include <CGAL/Simple_cartesian.h>
+#include <CGAL/Polyhedron_3.h>
+#include <CGAL/IO/Polyhedron_iostream.h>
+#include <CGAL/Parameterization_polyhedron_adaptor_3.h>
+#include <CGAL/parameterize.h>
+
 
 
 #include "graphs.h"
@@ -36,6 +53,265 @@
 
 
 using namespace boost;
+
+
+typedef CGAL::Simple_cartesian<double>      Kernel;
+typedef CGAL::Polyhedron_3<Kernel>          Polyhedron;
+
+
+typedef CGAL::Parameterization_polyhedron_adaptor_3<Polyhedron>
+Parameterization_polyhedron_adaptor;
+
+
+static bool write_file_eps(const Parameterization_polyhedron_adaptor& mesh_adaptor,
+	const char *pFilename,
+	double scale = 500.0)
+{
+	const Polyhedron& mesh = mesh_adaptor.get_adapted_mesh();
+	std::ofstream out(pFilename);
+	if (!out)
+		return false;
+	CGAL::set_ascii_mode(out);
+	// compute bounding box
+	double xmin, xmax, ymin, ymax;
+	xmin = ymin = xmax = ymax = 0;
+	Polyhedron::Halfedge_const_iterator pHalfedge;
+	for (pHalfedge = mesh.halfedges_begin();
+		pHalfedge != mesh.halfedges_end();
+		pHalfedge++)
+	{
+		double x1 = scale * mesh_adaptor.info(pHalfedge->prev())->uv().x();
+		double y1 = scale * mesh_adaptor.info(pHalfedge->prev())->uv().y();
+		double x2 = scale * mesh_adaptor.info(pHalfedge)->uv().x();
+		double y2 = scale * mesh_adaptor.info(pHalfedge)->uv().y();
+		xmin = (std::min)(xmin, x1);
+		xmin = (std::min)(xmin, x2);
+		xmax = (std::max)(xmax, x1);
+		xmax = (std::max)(xmax, x2);
+		ymax = (std::max)(ymax, y1);
+		ymax = (std::max)(ymax, y2);
+		ymin = (std::min)(ymin, y1);
+		ymin = (std::min)(ymin, y2);
+	}
+	out << "%!PS-Adobe-2.0 EPSF-2.0" << std::endl;
+	out << "%%BoundingBox: " << int(xmin + 0.5) << " "
+		<< int(ymin + 0.5) << " "
+		<< int(xmax + 0.5) << " "
+		<< int(ymax + 0.5) << std::endl;
+	out << "%%HiResBoundingBox: " << xmin << " "
+		<< ymin << " "
+		<< xmax << " "
+		<< ymax << std::endl;
+	out << "%%EndComments" << std::endl;
+	out << "gsave" << std::endl;
+	out << "0.1 setlinewidth" << std::endl;
+	// color macros
+	out << std::endl;
+	out << "% RGB color command - r g b C" << std::endl;
+	out << "/C { setrgbcolor } bind def" << std::endl;
+	out << "/white { 1 1 1 C } bind def" << std::endl;
+	out << "/black { 0 0 0 C } bind def" << std::endl;
+	// edge macro -> E
+	out << std::endl;
+	out << "% Black stroke - x1 y1 x2 y2 E" << std::endl;
+	out << "/E {moveto lineto stroke} bind def" << std::endl;
+	out << "black" << std::endl << std::endl;
+	// for each halfedge
+	for (pHalfedge = mesh.halfedges_begin();
+		pHalfedge != mesh.halfedges_end();
+		pHalfedge++)
+	{
+		double x1 = scale * mesh_adaptor.info(pHalfedge->prev())->uv().x();
+		double y1 = scale * mesh_adaptor.info(pHalfedge->prev())->uv().y();
+		double x2 = scale * mesh_adaptor.info(pHalfedge)->uv().x();
+		double y2 = scale * mesh_adaptor.info(pHalfedge)->uv().y();
+		out << x1 << " " << y1 << " " << x2 << " " << y2 << " E" << std::endl;
+	}
+	/* Emit EPS trailer. */
+	out << "grestore" << std::endl;
+	out << std::endl;
+	out << "showpage" << std::endl;
+	return true;
+}
+
+
+
+
+
+
+
+
+
+
+
+int figure_out_how_to_use_CGAL(char* filename){
+	//try to do almost exactly what I've done with boost//
+	//read in the surface, but as a CGAL structure.  Then let's try to use
+	//the shortest path just like we did with the boost graph.
+	//then we will try to use CGAL functions to parameterize.  
+
+
+	std::ifstream stream(filename);
+	//***************************************
+	// Read the mesh
+	//***************************************
+
+	std::cout << "Read in file" << std::endl;
+	Polyhedron mesh;
+	stream >> mesh;
+	if (!stream || !mesh.is_valid() || mesh.empty())
+	{
+		std::cerr << "Error: cannot read OFF file " << filename << std::endl;
+		return EXIT_FAILURE;
+	}
+
+
+	//***************************************
+	// Create Polyhedron adaptor
+	// Note: no cutting => we support only
+	// meshes that are topological disks
+	//***************************************
+
+
+	Parameterization_polyhedron_adaptor mesh_adaptor(mesh);
+
+	//***************************************
+	// Floater Mean Value Coordinates parameterization
+	// (defaults are circular border and OpenNL solver)
+	//***************************************
+
+
+
+
+
+
+
+	typedef CGAL::Parameterizer_traits_3<Parameterization_polyhedron_adaptor>
+		Parameterizer;  // Type that defines the error codes
+
+	Parameterizer::Error_code err = CGAL::parameterize(mesh_adaptor);
+	switch (err) {
+	case Parameterizer::OK: // Success
+		break;
+	case Parameterizer::ERROR_EMPTY_MESH: // Input mesh not supported
+	case Parameterizer::ERROR_NON_TRIANGULAR_MESH:
+	case Parameterizer::ERROR_NO_TOPOLOGICAL_DISC:
+	case Parameterizer::ERROR_BORDER_TOO_SHORT:
+		std::cerr << "Input mesh not supported: " << Parameterizer::get_error_message(err) << std::endl;
+		return EXIT_FAILURE;
+		break;
+	default: // Error
+		std::cerr << "Error: " << Parameterizer::get_error_message(err) << std::endl;
+		return EXIT_FAILURE;
+		break;
+	};
+
+
+	//***************************************
+	// Output
+	//***************************************
+
+	// Raw output: dump (u,v) pairs
+
+
+
+
+	Polyhedron::Vertex_const_iterator pVertex;
+	for (pVertex = mesh.vertices_begin();
+		pVertex != mesh.vertices_end();
+		pVertex++)
+	{
+		// (u,v) pair is stored in any halfedge
+		double u = mesh_adaptor.info(pVertex->halfedge())->uv().x();
+		double v = mesh_adaptor.info(pVertex->halfedge())->uv().y();
+		//double z = mesh_adaptor.info(pVertex->halfedge())->uv().z();
+		std::cout << "(u,v) = (" << u << "," << v << ")" << std::endl;
+	}
+
+
+	//***************************************
+	// Save file for visualization
+	//***************************************
+
+	Polyhedron new_mesh = mesh_adaptor.get_adapted_mesh();
+
+	// write the polyhedron out as a .OFF file
+	std::ofstream os("dump.off");
+	os << new_mesh;
+	os.close();
+
+
+	//***************************************
+	// Output
+	//***************************************
+	// Write Postscript file
+	if (!write_file_eps(mesh_adaptor, "dump2.eps"))
+	{
+		std::cerr << "Error: cannot write file " <<  "dump2.eps" << std::endl;
+		return EXIT_FAILURE;
+	}
+
+
+
+
+	return 0;
+}
+
+
+/*
+// barebones .OFF file reader, throws away texture coordinates, normals, etc.
+// stores results in input coords array, packed [x0,y0,z0,x1,y1,z1,...] and
+// tris array packed [T0a,T0b,T0c,T1a,T1b,T1c,...]
+//http://jamesgregson.blogspot.com/2012/05/example-code-for-building.html
+void load_obj(const char *filename, std::vector<double> &coords, std::vector<int> &tris){
+	double x, y, z;
+	char line[1024], v0[1024], v1[1024], v2[1024];
+
+	// open the file, return if open fails
+	FILE *fp = fopen(filename, "r");
+	if (!fp) return;
+
+	// read lines from the file, if the first character of the
+	// line is 'v', we are reading a vertex, otherwise, if the
+	// first character is a 'f' we are reading a facet
+	while (fgets(line, 1024, fp)){
+		if (line[0] == 'v'){
+			sscanf(line, "%*s%lf%lf%lf", &x, &y, &z);
+			coords.push_back(x);
+			coords.push_back(y);
+			coords.push_back(z);
+		}
+		else if (line[0] == 'f'){
+			sscanf(line, "%*s%s%s%s", v0, v1, v2);
+			tris.push_back(get_first_integer(v0) - 1);
+			tris.push_back(get_first_integer(v1) - 1);
+			tris.push_back(get_first_integer(v2) - 1);
+		}
+	}
+	fclose(fp);
+}
+*/
+/*int loadObject() {
+	// two vectors to hold point coordinates and
+	// triangle vertex indices
+	//std::vector<double> coords;
+	std::vector<int>    tris;
+
+	// load the input file
+	load_obj("input.obj", coords, tris);
+	if (coords.size() == 0)
+		return 1;
+
+	// build a polyhedron from the loaded arrays
+	Polyhedron P;
+	polyhedron_builder<HalfedgeDS> builder(coords, tris);
+	P.delegate(builder);
+
+	// write the polyhedron out as a .OFF file
+	std::ofstream os("dump.off");
+	os << P;
+	os.close();
+}*/
 
 int test_line_parameterization(default_Graph & g){
 
@@ -117,7 +393,7 @@ int test_line_parameterization(default_Graph & g){
 	double dir_scale = diff_V(g_new[vertex_separator[n - 1]], g_new[vertex_separator[0]]);
 	V tmp;
 
-
+	//this takes each of the points and places them on a straight line between points a and b.
 	for (int i = 0; i < n-1; i++)
 	{
 		double portion = distances[vertex_separator[i]]; // = d(A,C)
@@ -195,7 +471,6 @@ int test_line_parameterization(default_Graph & g){
 	return 0;
 }
 
-
 int prototype_components(default_Graph& g){
 
 	/* Two points on opposite sides of our test surface */
@@ -240,8 +515,8 @@ int main(int argc, char* argv[])
 	/* Create a graph from the file above */
 	g = create_graph(filename);
 
-
-	test_line_parameterization(g);
+	figure_out_how_to_use_CGAL(filename);
+	//test_line_parameterization(g);
 	//prototype_components(g);
 
 	int h;

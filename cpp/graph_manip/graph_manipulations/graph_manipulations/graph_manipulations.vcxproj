@@ -52,11 +52,14 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>C:\Dev\boost_1_57_0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Dev\Eigen\eigen-lib;C:\Qt4\include\QtGui;C:\Qt4\include\QtCore;C:\Qt4\include\Qt;C:\Dev\CGAL-4.5.2\auxiliary\gmp\include;C:\Dev\CGAL-4.5.2\include;C:\Dev\boost_1_57_0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>C:\Dev\Eigen\eigen-lib\;C:\Dev\boost_1_57_0\stage\lib;C:\Dev\CGAL-4.5.2\auxiliary\gmp\lib;C:\Dev\boost_1_57_0\lib;C:\Qt4\lib;C:\Dev\CGAL-4.5.2\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

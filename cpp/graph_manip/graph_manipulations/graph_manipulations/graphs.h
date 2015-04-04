@@ -95,7 +95,10 @@ int print_all_edges(default_Graph g);
 int add_edge_N(int in, int out, default_Graph &g);
 int print_point(V &p);
 
-
+//******
+//This is intended to project the vector (encoded in direction, portion, dir_scale) on the vector a
+//In otherwords, it is the point moving function of the linear parameterization
+//******
 V project_ish(double scale, double portion, V direction, double dir_scale, V a);
 V project_ish(double scale, double portion, V direction, double dir_scale, V a)
 {

@@ -1,11 +1,9 @@
-// graph_manipulations.cpp : Defines the entry point for the console application.
-//
+// graph_manipulations.cpp : 
 
 
 #define _CRT_SECURE_NO_WARNINGS
 
 #include "stdafx.h"
-//#include "adjacency_list_io.h"
 
 
 #include <boost/config.hpp>
@@ -45,7 +43,21 @@
 #include <CGAL/IO/Polyhedron_iostream.h>
 #include <CGAL/Parameterization_polyhedron_adaptor_3.h>
 #include <CGAL/parameterize.h>
+#include <CGAL/Discrete_conformal_map_parameterizer_3.h>
+#include <CGAL/Discrete_authalic_parameterizer_3.h>
+#include <CGAL/Square_border_parameterizer_3.h>
+#include <CGAL/Parameterization_mesh_patch_3.h>
+#include <CGAL/Eigen_solver_traits.h>
+#include <CGAL/Mean_value_coordinates_parameterizer_3.h>
+#include <CGAL/Parameterization_mesh_feature_extractor.h>
 
+
+//#include <CGAL/Two_vertices_parameterizer_3.h>
+//#include <CGAL/LSCM_parameterizer_3.h>
+//#include <CGAL/OpenNL/linear_solver.h>
+//#include "Polyhedron_ex.h"
+//#include "Mesh_cutter.h"
+//#include "Parameterization_polyhedron_adaptor_ex.h"
 
 
 #include "graphs.h"
@@ -58,9 +70,32 @@ using namespace boost;
 typedef CGAL::Simple_cartesian<double>      Kernel;
 typedef CGAL::Polyhedron_3<Kernel>          Polyhedron;
 
-
+// Parameterization Mesh
 typedef CGAL::Parameterization_polyhedron_adaptor_3<Polyhedron>
 Parameterization_polyhedron_adaptor;
+
+// Square Border
+typedef CGAL::Square_border_arc_length_parameterizer_3<Parameterization_polyhedron_adaptor> 
+Border_parameterizer;
+
+// Eigen solver
+typedef CGAL::Eigen_solver_traits<> Solver;
+
+// Floater Mean Value Coordinates parameterization with square border
+typedef CGAL::Mean_value_coordinates_parameterizer_3<Parameterization_polyhedron_adaptor, Border_parameterizer, Solver>
+Parameterizer;
+
+
+// read the mesh from our file 
+int read_mesh(char* filename, Polyhedron & mesh);
+Parameterization_polyhedron_adaptor parameterize_mesh(Polyhedron & mesh);
+
+
+
+//  This function will take a graph and a set of points
+//  It will generate the vertex separator
+int create_vertex_separator(default_Graph &g, V a, V b, std::vector<vertex_descriptor> & vertex_separator);
+int print_mesh(const Polyhedron & mesh, const Parameterization_polyhedron_adaptor & mesh_adaptor);
 
 
 static bool write_file_eps(const Parameterization_polyhedron_adaptor& mesh_adaptor,
@@ -135,61 +170,38 @@ static bool write_file_eps(const Parameterization_polyhedron_adaptor& mesh_adapt
 }
 
 
-
-
-
-
-
-
-
-
-
-int figure_out_how_to_use_CGAL(char* filename){
-	//try to do almost exactly what I've done with boost//
-	//read in the surface, but as a CGAL structure.  Then let's try to use
-	//the shortest path just like we did with the boost graph.
-	//then we will try to use CGAL functions to parameterize.  
-
+//Read in a mesh from a file.
+int read_mesh(char* filename, Polyhedron & mesh){
 
 	std::ifstream stream(filename);
+
 	//***************************************
-	// Read the mesh
+	// Read the mesh as a polyhedron
 	//***************************************
 
 	std::cout << "Read in file" << std::endl;
-	Polyhedron mesh;
+
 	stream >> mesh;
 	if (!stream || !mesh.is_valid() || mesh.empty())
 	{
 		std::cerr << "Error: cannot read OFF file " << filename << std::endl;
 		return EXIT_FAILURE;
 	}
+	return 0;
+}
 
-
-	//***************************************
-	// Create Polyhedron adaptor
-	// Note: no cutting => we support only
-	// meshes that are topological disks
-	//***************************************
-
-
+//Parameterize the map and return the mesh adaptor
+Parameterization_polyhedron_adaptor parameterize_mesh(Polyhedron & mesh){
+	std::cout << "parameterize mesh and return parameterization" << std::endl;
+	// Create Polyhedron adaptor mesh
+	// Assume mesh is a topological disk
 	Parameterization_polyhedron_adaptor mesh_adaptor(mesh);
 
-	//***************************************
-	// Floater Mean Value Coordinates parameterization
-	// (defaults are circular border and OpenNL solver)
-	//***************************************
+	// Parameterize our mesh according to Parameterizer specs
+	Parameterizer::Error_code err = CGAL::parameterize(mesh_adaptor, Parameterizer());
 
 
-
-
-
-
-
-	typedef CGAL::Parameterizer_traits_3<Parameterization_polyhedron_adaptor>
-		Parameterizer;  // Type that defines the error codes
-
-	Parameterizer::Error_code err = CGAL::parameterize(mesh_adaptor);
+	// Check to make sure it worked just find -- this is the standard checker
 	switch (err) {
 	case Parameterizer::OK: // Success
 		break;
@@ -198,24 +210,50 @@ int figure_out_how_to_use_CGAL(char* filename){
 	case Parameterizer::ERROR_NO_TOPOLOGICAL_DISC:
 	case Parameterizer::ERROR_BORDER_TOO_SHORT:
 		std::cerr << "Input mesh not supported: " << Parameterizer::get_error_message(err) << std::endl;
-		return EXIT_FAILURE;
+		//return EXIT_FAILURE;
 		break;
 	default: // Error
 		std::cerr << "Error: " << Parameterizer::get_error_message(err) << std::endl;
-		return EXIT_FAILURE;
+		//return EXIT_FAILURE;
 		break;
 	};
 
+	return mesh_adaptor;
+}
 
+
+//Save the mesh as .off and .eps (i think the .off is not printing quite right.
+int save_mesh(Parameterization_polyhedron_adaptor & mesh_adaptor)
+{
+	std::cout << "save mesh " << std::endl;
 	//***************************************
-	// Output
+	// Save file for visualization
 	//***************************************
 
+	Polyhedron new_mesh = mesh_adaptor.get_adapted_mesh();
+
+	// write the polyhedron out as a .OFF file
+	// This seems to output the original mesh
+	std::ofstream os("dump.off");
+	os << new_mesh;
+	os.close();
+
+	// Write Postscript file
+	// this outputs the new 2d mesh
+	if (!write_file_eps(mesh_adaptor, "dump2.eps"))
+	{
+		std::cerr << "Error: cannot write file " <<  "dump2.eps" << std::endl;
+		return EXIT_FAILURE;
+	}
+	
+	return 0; 
+
+}
+
+//Print the mesh to the console line
+int print_mesh(const Polyhedron & mesh, const Parameterization_polyhedron_adaptor & mesh_adaptor){
 	// Raw output: dump (u,v) pairs
-
-
-
-
+	std::cout << "Printing mesh and mesh_adaptor" << std::endl;
 	Polyhedron::Vertex_const_iterator pVertex;
 	for (pVertex = mesh.vertices_begin();
 		pVertex != mesh.vertices_end();
@@ -228,104 +266,48 @@ int figure_out_how_to_use_CGAL(char* filename){
 		std::cout << "(u,v) = (" << u << "," << v << ")" << std::endl;
 	}
 
+	return 0;
+}
 
-	//***************************************
-	// Save file for visualization
-	//***************************************
+int create_vertex_separator(default_Graph &g, V a, V b, std::vector<vertex_descriptor> & vertex_separator){
+	std::vector<vertex_descriptor> predecessors(num_vertices(g)); // To store parents
+	std::vector<Weight> distances(num_vertices(g)); // To store distances
 
-	Polyhedron new_mesh = mesh_adaptor.get_adapted_mesh();
+	find_shortest_path(g, a, b, predecessors, distances, vertex_separator);
+	return 0;
+}
 
-	// write the polyhedron out as a .OFF file
-	std::ofstream os("dump.off");
-	os << new_mesh;
-	os.close();
-
-
-	//***************************************
-	// Output
-	//***************************************
-	// Write Postscript file
-	if (!write_file_eps(mesh_adaptor, "dump2.eps"))
-	{
-		std::cerr << "Error: cannot write file " <<  "dump2.eps" << std::endl;
-		return EXIT_FAILURE;
-	}
+int separate_graph(default_Graph & g, V a, V b){
 
 
+	std::vector<vertex_descriptor> vertex_separator;
+	create_vertex_separator(g, a, b, vertex_separator);
+	
+
+	//create a filtered graph that does not have the vertex_serparator in it.  
+	FilteredGraphType filtered_graph = filter_separator(g, vertex_separator);
+
+	std::vector<int> component(num_vertices(filtered_graph));
+	int num = find_connected_components(filtered_graph, component);
+
+	print_connected_components(num, component);
 
 
 	return 0;
 }
 
-
-/*
-// barebones .OFF file reader, throws away texture coordinates, normals, etc.
-// stores results in input coords array, packed [x0,y0,z0,x1,y1,z1,...] and
-// tris array packed [T0a,T0b,T0c,T1a,T1b,T1c,...]
-//http://jamesgregson.blogspot.com/2012/05/example-code-for-building.html
-void load_obj(const char *filename, std::vector<double> &coords, std::vector<int> &tris){
-	double x, y, z;
-	char line[1024], v0[1024], v1[1024], v2[1024];
-
-	// open the file, return if open fails
-	FILE *fp = fopen(filename, "r");
-	if (!fp) return;
-
-	// read lines from the file, if the first character of the
-	// line is 'v', we are reading a vertex, otherwise, if the
-	// first character is a 'f' we are reading a facet
-	while (fgets(line, 1024, fp)){
-		if (line[0] == 'v'){
-			sscanf(line, "%*s%lf%lf%lf", &x, &y, &z);
-			coords.push_back(x);
-			coords.push_back(y);
-			coords.push_back(z);
-		}
-		else if (line[0] == 'f'){
-			sscanf(line, "%*s%s%s%s", v0, v1, v2);
-			tris.push_back(get_first_integer(v0) - 1);
-			tris.push_back(get_first_integer(v1) - 1);
-			tris.push_back(get_first_integer(v2) - 1);
-		}
-	}
-	fclose(fp);
-}
-*/
-/*int loadObject() {
-	// two vectors to hold point coordinates and
-	// triangle vertex indices
-	//std::vector<double> coords;
-	std::vector<int>    tris;
-
-	// load the input file
-	load_obj("input.obj", coords, tris);
-	if (coords.size() == 0)
-		return 1;
-
-	// build a polyhedron from the loaded arrays
-	Polyhedron P;
-	polyhedron_builder<HalfedgeDS> builder(coords, tris);
-	P.delegate(builder);
-
-	// write the polyhedron out as a .OFF file
-	std::ofstream os("dump.off");
-	os << P;
-	os.close();
-}*/
-
 int test_line_parameterization(default_Graph & g){
 
-
+	//*******************************
+	//  Tried to setup some basic border parameterization.  
+	//  ended up being very complicated and it's better
+	//  to just use the CGAL methods  
+	//*******************************
 
 	//create a deep copy of the graph
 	//(eventually make a map to associate the two)
 	//this graph we will slowly deform 
 	default_Graph g_new(g);
-
-
-
-
-
 
 	/* we want to try a simple paramterization*/
 	std::vector<vertex_descriptor> predecessors(num_vertices(g)); // To store parents
@@ -340,7 +322,7 @@ int test_line_parameterization(default_Graph & g){
 	//lets define our unit square.
 
 	//std::map<V, V> param_map;
-	
+
 
 	write_point(corners_orig[0], 2.1, 2.1, 1.7);//upper_right
 	write_point(corners_orig[1], 2.0, 1.1, 2);//upper_left
@@ -368,6 +350,9 @@ int test_line_parameterization(default_Graph & g){
 
 	std::vector<vertex_descriptor> vertex_separator;
 	find_shortest_path(g, corners_orig[0], corners_orig[1], predecessors, distances, vertex_separator);
+
+
+
 	int n = vertex_separator.size();
 	for (int i = 0; i < n; i++)
 		std::cout << vertex_separator[i] << std::endl;
@@ -376,16 +361,13 @@ int test_line_parameterization(default_Graph & g){
 	g_new[vertex_separator[0]] = corners_new[0];
 	g_new[vertex_separator[n - 1]] = corners_new[1];
 
-	//g_new[vertex_separator[1]] = 
 	std::cout << "vertex_separator[0] is index:" << vertex_separator[0] << std::endl;
 	std::cout << "vertex_separator[n-1] is index:" << vertex_separator[n - 1] << std::endl;
 
 	std::cout << "CHECK " << std::endl << std::endl << std::endl;
 	for (int i = 0; i < n; i++)
-		std::cout << distances[vertex_separator[i]] <<std::endl;
+		std::cout << distances[vertex_separator[i]] << std::endl;
 	std::cout << std::endl;
-
-
 
 
 	double scale = distances[vertex_separator[0]]; // = d(A,B)
@@ -394,80 +376,17 @@ int test_line_parameterization(default_Graph & g){
 	V tmp;
 
 	//this takes each of the points and places them on a straight line between points a and b.
-	for (int i = 0; i < n-1; i++)
+	for (int i = 0; i < n - 1; i++)
 	{
 		double portion = distances[vertex_separator[i]]; // = d(A,C)
 		tmp = project_ish(scale, portion, direction, dir_scale, g_new[vertex_separator[n - 1]]);
 		g_new[vertex_separator[i]] = tmp;
 	}
-	//std::cout << std::endl;
-	//std::cout << "point number " << vertex_separator[n - 1] << " is located at" << std::endl;
-	//print_point(g_new[vertex_separator[n - 1]]);
-	//std::cout << "point number " << vertex_separator[0] << " is located at" << std::endl;
-	//print_point(g_new[vertex_separator[0]]);
 
-	//std::cout << "point number " << vertex_separator[1] << " is located at" << std::endl;
-	//print_point(g_new[vertex_separator[1]]);
-	
-	for (int i = 0; i < n; i++){
+	for (int i = 0; i < n; i++)
 		print_point(g_new[vertex_separator[i]]);
-	}
 
 
-
-
-
-
-	//vertex_descriptor up_r = naive_closest_vertex(g, upper_right);
-	//vertex_descriptor up_l = naive_closest_vertex(g, upper_left);
-	//vertex_descriptor low_r = naive_closest_vertex(g, lower_right);
-	//vertex_descriptor low_l = naive_closest_vertex(g, lower_left);
-	//std::cout << "Closest vertices: " << up_r << ", " << up_l << ", " << low_r << ", " << low_l << std::endl;
-	//print_point(g[up_r]);print_point(g[up_l]);print_point(g[low_r]);print_point(g[low_l]);
-
-	
-
-	//now we take 2 points, find the shortest path between the two.
-	//take this shortest path and map it to the interval [0,1]
-
-	/*
-	for (int i = 0; i < vertex_separator.size(); i++){
-		std::cout << distances[vertex_separator[i]] << std::endl;
-	}
-
-
-	double max = distances[vertex_separator[0]];
-	// we neeed to relocate all of the positions.  
-
-	//typedef adjacency_list < setS, vecS, undirectedS,
-	//	V, WeightProperty, int, vecS > test_Graph;
-
-	default_Graph relocated(vertex_separator.size());
-
-
-	//typedef property_map < default_Graph, vertex_index_t >::type IndexMap;
-
-	for (int i = 0; i < vertex_separator.size(); i++){
-		write_vertex(relocated, i, 0, 0, distances[vertex_separator[i]] / max);
-		std::cout << "The " << vertex_separator[i] << " vertex is now at " << i << "." << std::endl;
-	}
-	/* Try to now map to an entire boundary edge.   */
-
-
-
-
-
-	//for (int i = 0; i < vertex_separator.size() - 1; i++){
-	//	add_edge_N(i, i + 1, relocated);
-	//}
-
-	//print_all_edges(relocated);
-	//print_all_vertices(relocated);
-
-	//print_point(g[vertex_separator[0]]);
-	//std::cout << vertex_separator[0] << std::endl;
-	//std::cout << distances[vertex_separator[0]] << std::endl;
-	
 	return 0;
 }
 
@@ -481,28 +400,10 @@ int prototype_components(default_Graph& g){
 	/*  */
 
 	// Create output storage for Dijkstra + separator
-	std::vector<vertex_descriptor> predecessors(num_vertices(g)); // To store parents
-	std::vector<Weight> distances(num_vertices(g)); // To store distances
-	std::vector<vertex_descriptor> vertex_separator;
-
-	find_shortest_path(g, start, end, predecessors, distances, vertex_separator);
-
-	//create a filtered graph that does not have the vertex_serparator in it.  
-	FilteredGraphType filtered_graph = filter_separator(g, vertex_separator);
-
-	std::vector<int> component(num_vertices(filtered_graph));
-	int num = find_connected_components(filtered_graph, component);
-
-	print_connected_components(num, component);
 
 
 
-	/* Now we want to create separate graphs for each of these */
-	/* not actually sure what to do next so we will try to fit the vertex separator onto the straight line of our shape
-	then once we know how that works, we can figure out how to through the connected components onto it
-	immediately, we will clean the shit out of the code */
 
-	/* Add vertex separator back to connected components as boundary */
 	return 0;
 
 }
@@ -512,12 +413,14 @@ int main(int argc, char* argv[])
 	default_Graph g;
 	char* filename = "../../surface/surface.off";
 
-	/* Create a graph from the file above */
+	// Create a boost graph from the file above 
 	g = create_graph(filename);
 
-	figure_out_how_to_use_CGAL(filename);
-	//test_line_parameterization(g);
-	//prototype_components(g);
+	// Create CGAL mesh from the file above
+	Polyhedron mesh;
+	read_mesh(filename, mesh);
+	Parameterization_polyhedron_adaptor new_mesh = parameterize_mesh(mesh);
+	save_mesh(new_mesh);
 
 	int h;
 	std::cin >> h;

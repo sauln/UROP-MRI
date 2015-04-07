@@ -506,6 +506,8 @@ int dijkstra_with_graph(){
 
 	return 0;
 }
+
+
 int dijkstra_with_mesh(){
 	//this will be a completely self contained version of dijkstra with mesh
 
@@ -538,8 +540,7 @@ int dijkstra_with_mesh(){
 	DistanceMap_mesh distanceMap(&distances[0], indexMap);
 
 	
-	dijkstra_shortest_paths(mesh, st, distance_map(distanceMap).predecessor_map(predecessorMap).distance_compare(dist_compare()));
-	//dijkstra_shortest_paths(mesh, st, distance_map(distanceMap).predecessor_map(predecessorMap).distance_compare(dist_compare()).distance_combine(dist_combine()));
+	dijkstra_shortest_paths(mesh, st, distance_map(distanceMap).predecessor_map(predecessorMap).distance_combine(dist_combine()).distance_compare(dist_compare()));
 
 	std::cout << "distance of (" << indexMap[st] << ", " << indexMap[en] << ") = " << distanceMap[en] << std::endl;
 

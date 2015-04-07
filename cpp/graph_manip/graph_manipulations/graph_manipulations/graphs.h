@@ -143,15 +143,14 @@ typedef property_map < Polyhedron, vertex_index_t >::type IndexMap_mesh;
 typedef iterator_property_map < vertex_descriptor_mesh*, IndexMap_mesh, vertex_descriptor_mesh, vertex_descriptor_mesh& > PredecessorMap_mesh;
 typedef iterator_property_map < Weight*, IndexMap_mesh, Weight, Weight& > DistanceMap_mesh;
 
-//-> this some how needs to override the default squared_length distance and use sqrt(squared_length) distance
-
-
+//-> this overrides the default squared_length distance and use sqrt(squared_length) distance
 
 struct dist_combine{
 	// Some internal state
 
 	double operator()(const double & a, const double &b) const {
-		return b;
+		//std::cout << "a: " << a << " and b: " << b << std::endl;
+		return sqrt(b) + a;
 	}
 };
 

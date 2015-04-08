@@ -13,9 +13,8 @@
 
 #include <CGAL/boost/graph/dijkstra_shortest_paths.hpp>
 
-
+//These need to be templated into one function
 int naive_closest_vertex(default_Graph g, V p);
-
 int naive_closest_test(const default_Graph & g, V p ){
 	// this is a really shoddy test that can be expanded. 
 	// currently, it was written solely to check that naive closest was returning the correct index. 
@@ -45,7 +44,6 @@ int naive_closest_vertex(default_Graph g, V p){
 
 	return min_ind;
 }
-
 int naive_closest_vertex(Polyhedron & g, const Point & p, vertex_descriptor_mesh & st){
 	// cycle through each vertex and save the one closest to the point
 	// return the index for that vertex
@@ -78,7 +76,6 @@ int naive_closest_vertex(Polyhedron & g, const Point & p, vertex_descriptor_mesh
 
 	return closest_id;
 }
-
 int naive_closest_vertex(Finite_Polyhedron & g, const Point & p){
 	// cycle through each vertex and save the one closest to the point
 	// return the index for that vertex
@@ -161,9 +158,9 @@ int find_shortest_path(Finite_Polyhedron & g, Point start, Point end,
 
 
 int find_shortest_path(default_Graph & g, V start, V end, 
-						std::vector<vertex_descriptor> &predecessors, 
-						std::vector<Weight> &distances, 
-						std::vector<vertex_descriptor> &vertex_separator){
+	std::vector<vertex_descriptor> &predecessors, 
+	std::vector<Weight> &distances, 
+	std::vector<vertex_descriptor> &vertex_separator){
 
 	//split this into two smaller functions
 	//find vertex index for start andend 
@@ -221,6 +218,29 @@ FilteredGraphType filter_separator(default_Graph & g, std::vector<vertex_descrip
 	print_graph(filtered_graph);
 	return filtered_graph;
 }
+
+
+FilteredMeshType filter_out_separator(Polyhedron & mesh, std::vector<vertex_descriptor_mesh> &vertex_separator){
+	/* Create a filtered graph of original graph without the vertex separator */
+
+	std::cout << "Filter out vertex separator" << std::endl;
+
+	//initialize filter -- turning this into a class would make this a little more automatic.
+	vertex_id_filter_mesh<Polyhedron> filter;
+	filter.vertex_separator = vertex_separator;
+	filter.size_of_vs = vertex_separator.size();
+
+
+	//creating filtered  graph
+
+	FilteredMeshType filtered_graph(mesh, boost::keep_all(), filter); // (graph, EdgePredicate, VertexPredicate)
+
+
+	print_graph(filtered_graph);
+	return filtered_graph;
+}
+
+
 
 int find_connected_components(FilteredGraphType filtered_graph, std::vector<int> & component)
 {

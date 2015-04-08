@@ -118,7 +118,10 @@ typedef Polyhedron::Vertex_iterator vertex_iterator_mesh_2;
 typedef boost::graph_traits<Polyhedron>::vertex_descriptor vertex_descriptor_mesh;
 typedef boost::graph_traits<Polyhedron>::vertex_iterator vertex_iterator_mesh;
 typedef boost::graph_traits<Polyhedron>::edge_descriptor edge_descriptor_mesh;
+//typedef boost::graph_traits<Polyhedron>::edge_iterator edge_iterator_mesh;
+typedef Polyhedron::Edge_iterator edge_iterator_mesh;
 
+typedef CGAL::Out_edge_iterator < Polyhedron > edge_it_mesh;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -165,6 +168,29 @@ struct dist_compare{
 
 
 
+
+/* Predicate and filter for the separator filter */
+template <typename TGraph>
+struct vertex_id_filter_mesh
+{
+	//add an attribute for the vertex_separator
+	std::vector<vertex_descriptor_mesh> vertex_separator;
+	int size_of_vs;
+
+	//predicate to check if the vertex is in our vertex_separator.  Intended to remove all 
+	//vertices in separator.
+	bool operator()(const typename boost::graph_traits<TGraph>::vertex_descriptor& v) const
+	{
+		//for unknown reason iterators are not working- resort to this ghetto way of checking 
+		for (int i = 0; i < size_of_vs; i++)
+			if (vertex_separator[i] == v)
+				return false;
+
+		return true; //default to returning true if v is not in the separator. (keep those not in separator
+	}
+};
+
+typedef filtered_graph<Polyhedron, keep_all, vertex_id_filter_mesh<Polyhedron> > FilteredMeshType;
 
 
 

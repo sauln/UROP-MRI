@@ -273,191 +273,122 @@ int create_vertex_separator(default_Graph &g, V a, V b, std::vector<vertex_descr
 	find_shortest_path(g, a, b, predecessors, distances, vertex_separator);
 	return 0;
 }
-/*
+
 int separate_graph(default_Graph & g, V a, V b){
 
 
-std::vector<vertex_descriptor> vertex_separator;
-create_vertex_separator(g, a, b, vertex_separator);
+	std::vector<vertex_descriptor> vertex_separator;
+	create_vertex_separator(g, a, b, vertex_separator);
 
 
-//create a filtered graph that does not have the vertex_serparator in it.
-FilteredGraphType filtered_graph = filter_separator(g, vertex_separator);
+	//create a filtered graph that does not have the vertex_serparator in it.
+	FilteredGraphType filtered_graph = filter_separator(g, vertex_separator);
 
-std::vector<int> component(num_vertices(filtered_graph));
-int num = find_connected_components(filtered_graph, component);
+	std::vector<int> component(num_vertices(filtered_graph));
+	int num = find_connected_components(filtered_graph, component);
 
-print_connected_components(num, component);
+	print_connected_components(num, component);
 
 
-return 0;
+	return 0;
 }
-*/
-/*
+
+
 int test_line_parameterization(default_Graph & g){
 
-//*******************************
-//  Tried to setup some basic border parameterization.
-//  ended up being very complicated and it's better
-//  to just use the CGAL methods
-//*******************************
-
-//create a deep copy of the graph
-//(eventually make a map to associate the two)
-//this graph we will slowly deform
-default_Graph g_new(g);
-
-// we want to try a simple paramterization
-std::vector<vertex_descriptor> predecessors(num_vertices(g)); // To store parents
-std::vector<Weight> distances(num_vertices(g)); // To store distances
 
 
-//This code is going to look really ugly -
-std::vector<V> corners_orig(4);
-std::vector<V> corners_new(4);
-//upper_left, upper_right, lower_left, lower_right;
+	//*******************************
+	//  Takes a linear vertex separator and straightens it out to the unit line
+	//  Tried to setup some basic border parameterization.
+	//  ended up being very complicated and it's better
+	//  to just use the CGAL methods
+	//*******************************
 
-//lets define our unit square.
+	//create a deep copy of the graph
+	//(eventually make a map to associate the two)
+	//this graph we will slowly deform
+	default_Graph g_new(g);
 
-//std::map<V, V> param_map;
-
-
-write_point(corners_orig[0], 2.1, 2.1, 1.7);//upper_right
-write_point(corners_orig[1], 2.0, 1.1, 2);//upper_left
-write_point(corners_orig[2], 0.5, 2.4, 2.5); //lower_right
-write_point(corners_orig[3], -0.3, 1.4, 1.5); //lower_left
-
-write_point(corners_new[0], 1.0, 1.0, 0.0);//upper_right
-write_point(corners_new[1], 1.0, 0.0, 0.0);//upper_left
-write_point(corners_new[2], 0.0, 1.0, 0.0); //lower_right
-write_point(corners_new[3], 0.0, 0.0, 0.0); //lower_left
-
-//param_map.insert(std::pair<V, V>(corners_orig[1], corners_new[1]));
-//param_map[corners_orig[1]] = corners_new[1];
-//for (int i = 0; i < 4; i++)
-//	param_map[corners_new[i]] =  corners_orig[i];
-
-//to find the new location of a node:
-//*******************
-//  Let A,B be two corner points in our original space.
-//  Let a,b be two corner points in our new space
-//  a point C in [A,B] can be represented as a point c in [a,b]
-//  and c =  ( d(A,C)/d(A,B) * (b-a)/d(a,b) ) + a
-//
-//*******************
-
-std::vector<vertex_descriptor> vertex_separator;
-find_shortest_path(g, corners_orig[0], corners_orig[1], predecessors, distances, vertex_separator);
-
-
-
-int n = vertex_separator.size();
-for (int i = 0; i < n; i++)
-std::cout << vertex_separator[i] << std::endl;
-
-//sets our new corners in place
-g_new[vertex_separator[0]] = corners_new[0];
-g_new[vertex_separator[n - 1]] = corners_new[1];
-
-std::cout << "vertex_separator[0] is index:" << vertex_separator[0] << std::endl;
-std::cout << "vertex_separator[n-1] is index:" << vertex_separator[n - 1] << std::endl;
-
-std::cout << "CHECK " << std::endl << std::endl << std::endl;
-for (int i = 0; i < n; i++)
-std::cout << distances[vertex_separator[i]] << std::endl;
-std::cout << std::endl;
-
-
-double scale = distances[vertex_separator[0]]; // = d(A,B)
-V direction = diff_direction(g_new[vertex_separator[0]], g_new[vertex_separator[n - 1]]); // = direction(A,B)
-double dir_scale = diff_V(g_new[vertex_separator[n - 1]], g_new[vertex_separator[0]]);
-V tmp;
-
-//this takes each of the points and places them on a straight line between points a and b.
-for (int i = 0; i < n - 1; i++)
-{
-double portion = distances[vertex_separator[i]]; // = d(A,C)
-tmp = project_ish(scale, portion, direction, dir_scale, g_new[vertex_separator[n - 1]]);
-g_new[vertex_separator[i]] = tmp;
-}
-
-for (int i = 0; i < n; i++)
-print_point(g_new[vertex_separator[i]]);
-
-
-return 0;
-}
-*/
-/*
-int prototype_components(default_Graph& g){
-
-// Two points on opposite sides of our test surface //
-V start, end;
-write_point(start, -5, -5, -5);
-write_point(end, 5, 5, 5);
-
-
-// Create output storage for Dijkstra + separator
-
-
-
-
-return 0;
-
-}
-*/
-
-
-int create_vertex_separator(Finite_Polyhedron &g, Point a, Point b, std::vector<vertex_descriptor_mesh> & vertex_separator){
-
-	std::cout << "entry point of the vertex_separator_mesh. " << std::endl;
-
-
-	std::cout <<"Does num_vertices work with filtered?: " << num_vertices(g) << std::endl;
-	std::vector<vertex_descriptor_mesh> predecessors(num_vertices(g)); // To store parents
+	// we want to try a simple paramterization
+	std::vector<vertex_descriptor> predecessors(num_vertices(g)); // To store parents
 	std::vector<Weight> distances(num_vertices(g)); // To store distances
 
-	find_shortest_path(g, a, b, predecessors, distances, vertex_separator);
-	return 0;
-}
+
+	//This code is going to look really ugly -
+	std::vector<V> corners_orig(4);
+	std::vector<V> corners_new(4);
+	//upper_left, upper_right, lower_left, lower_right;
+
+	//lets define our unit square.
+
+	//std::map<V, V> param_map;
+
+
+	write_point(corners_orig[0], 2.1, 2.1, 1.7);//upper_right
+	write_point(corners_orig[1], 2.0, 1.1, 2);//upper_left
+	write_point(corners_orig[2], 0.5, 2.4, 2.5); //lower_right
+	write_point(corners_orig[3], -0.3, 1.4, 1.5); //lower_left
+
+	write_point(corners_new[0], 1.0, 1.0, 0.0);//upper_right
+	write_point(corners_new[1], 1.0, 0.0, 0.0);//upper_left
+	write_point(corners_new[2], 0.0, 1.0, 0.0); //lower_right
+	write_point(corners_new[3], 0.0, 0.0, 0.0); //lower_left
+
+	//param_map.insert(std::pair<V, V>(corners_orig[1], corners_new[1]));
+	//param_map[corners_orig[1]] = corners_new[1];
+	//for (int i = 0; i < 4; i++)
+	//	param_map[corners_new[i]] =  corners_orig[i];
+
+	//to find the new location of a node:
+	//*******************
+	//  Let A,B be two corner points in our original space.
+	//  Let a,b be two corner points in our new space
+	//  a point C in [A,B] can be represented as a point c in [a,b]
+	//  and c =  ( d(A,C)/d(A,B) * (b-a)/d(a,b) ) + a
+	//
+	//*******************
+
+	std::vector<vertex_descriptor> vertex_separator;
+	find_shortest_path(g, corners_orig[0], corners_orig[1], predecessors, distances, vertex_separator);
 
 
 
-int compare_differences_between_graph_and_mesh(char *filename){
-	// Create a boost graph from the file above 
-	//default_Graph g;
-	//g = read_graph(filename);
+	int n = vertex_separator.size();
+	for (int i = 0; i < n; i++)
+		std::cout << vertex_separator[i] << std::endl;
 
-	// Create CGAL mesh from the file above
-	Polyhedron mesh;
-	Filter is_finite(mesh);
-	Finite_Polyhedron ft(mesh, is_finite, is_finite);
+	//sets our new corners in place
+	g_new[vertex_separator[0]] = corners_new[0];
+	g_new[vertex_separator[n - 1]] = corners_new[1];
+
+	std::cout << "vertex_separator[0] is index:" << vertex_separator[0] << std::endl;
+	std::cout << "vertex_separator[n-1] is index:" << vertex_separator[n - 1] << std::endl;
+
+	std::cout << "CHECK " << std::endl << std::endl << std::endl;
+	for (int i = 0; i < n; i++)
+		std::cout << distances[vertex_separator[i]] << std::endl;
+	std::cout << std::endl;
 
 
-	read_mesh(filename, mesh);
-	
+	double scale = distances[vertex_separator[0]]; // = d(A,B)
+	V direction = diff_direction(g_new[vertex_separator[0]], g_new[vertex_separator[n - 1]]); // = direction(A,B)
+	double dir_scale = diff_V(g_new[vertex_separator[n - 1]], g_new[vertex_separator[0]]);
+	V tmp;
 
-
-
-	// Associate indices to the vertices
-	vertex_iterator_mesh vit, ve;
-	int index = 0;
-	for (boost::tie(vit, ve) = boost::vertices(ft.m_g); vit != ve; ++vit){
-		(*vit)->id() = index++;
+	//this takes each of the points and places them on a straight line between points a and b.
+	for (int i = 0; i < n - 1; i++){
+		double portion = distances[vertex_separator[i]]; // = d(A,C)
+		tmp = project_ish(scale, portion, direction, dir_scale, g_new[vertex_separator[n - 1]]);
+		g_new[vertex_separator[i]] = tmp;
 	}
 
-	
-	Point start(-5, -5, -5);
-	Point end(5, 5, 5);
+	for (int i = 0; i < n; i++)
+		print_point(g_new[vertex_separator[i]]);
 
-	std::vector<vertex_descriptor_mesh> vertex_separator_mesh;
-	create_vertex_separator(ft, start, end, vertex_separator_mesh);
-	
 
 	return 0;
-
 }
-
 int dijkstra_with_graph(){
 	char* filename = "../../surface/surface.off";
 	default_Graph g;
@@ -508,13 +439,85 @@ int dijkstra_with_graph(){
 }
 
 
+
+
+
+
+//***************************************
+//
+//  This function does everything we need from start to finish
+//
+//***************************************
+
+bool isin(vertex_descriptor_mesh vit, std::vector<vertex_descriptor_mesh> vertex_separator){
+	return std::find(vertex_separator.begin(), vertex_separator.end(), vit) != vertex_separator.end();
+}
+
+int go_deeper(		const Polyhedron & mesh, 
+					const std::vector<vertex_descriptor_mesh> & vertex_separator, 
+					std::map<vertex_descriptor_mesh, int>& component, 
+					int & component_number, vertex_descriptor_mesh vit){
+
+
+	if (!isin(vit, vertex_separator) && component.find(vit) == component.end())
+	{
+		component[vit] = component_number;
+		//std::cout << "enter node " << vit->id() << ". Set to " << component_number << std::endl;
+
+		edge_it_mesh beg, eeg;
+		vertex_descriptor_mesh dog = vit;
+
+		//for each of vertex on the end of an out going edge,
+		for (boost::tie(beg, eeg) = out_edges(dog, mesh); beg != eeg; ++beg){
+			
+			vertex_descriptor_mesh fish = target(*beg, mesh);
+			//std::cout << "From " << vit->id() << " into " << fish->id() << std::endl;
+
+			if (!isin(fish, vertex_separator) && component.find(fish) == component.end()){
+				//std::cout << fish->id() << "+";
+				go_deeper(mesh, vertex_separator, component, component_number, fish);
+			}
+
+		}
+		//std::cout << std::endl;
+		//std::cout << (*vit)->vertex_begin()->next.id() <<std::endl;// << (*vit)->vertex_begin()->next.id();
+		return 1;
+	}
+	else{
+		return 0;
+	}
+}
+
+int label_components(const Polyhedron & mesh, const std::vector<vertex_descriptor_mesh> & vertex_separator, std::map<vertex_descriptor_mesh, int> &component){
+	vertex_iterator_mesh vit, ve;
+
+	//for every vertex in the mesh
+	int component_number = 0;
+	int check = 0;
+	for (boost::tie(vit, ve) = vertices(mesh); vit != ve; ++vit)
+	{
+		//std::cout << "Begin again at " << (*vit)->id() << std::endl;
+		check = go_deeper(mesh, vertex_separator, component, component_number, *vit);
+		//if the vertex is not in the separator and  has not already been dealt with
+		if (check == 1)
+			component_number += 1;
+	}
+	return 0;
+}
+
+
+
 int dijkstra_with_mesh(){
+
+
 	//this will be a completely self contained version of dijkstra with mesh
+
+	Point start(-5, -5, -5);
+	Point end(5, 5, 5);
 
 	char* filename = "../../surface/surface.off";
 	Polyhedron mesh;
 	read_mesh(filename, mesh);
-
 
 	// Associate indices to the vertices
 	vertex_iterator_mesh vit, ve;
@@ -523,13 +526,9 @@ int dijkstra_with_mesh(){
 		(*vit)->id() = index++;
 	}
 
-	Point start(-5, -5, -5);
-	Point end(5, 5, 5);
-
-	std::vector<vertex_descriptor_mesh> vertex_separator;
+	//std::vector<vertex_descriptor_mesh> vertex_separator;
 	std::vector<vertex_descriptor_mesh> predecessors(num_vertices(mesh)); // To store parents
 	std::vector<Weight> distances(num_vertices(mesh)); // To store distances
-
 
 	vertex_descriptor_mesh st, en;
 	int vert_1 = naive_closest_vertex(mesh, start, st);
@@ -539,13 +538,9 @@ int dijkstra_with_mesh(){
 	PredecessorMap_mesh predecessorMap(&predecessors[0], indexMap);
 	DistanceMap_mesh distanceMap(&distances[0], indexMap);
 
-	
 	dijkstra_shortest_paths(mesh, st, distance_map(distanceMap).predecessor_map(predecessorMap).distance_combine(dist_combine()).distance_compare(dist_compare()));
 
 	std::cout << "distance of (" << indexMap[st] << ", " << indexMap[en] << ") = " << distanceMap[en] << std::endl;
-
-
-
 
 
 	//print the shortest path
@@ -555,20 +550,60 @@ int dijkstra_with_mesh(){
 		it = predecessorMap[it];
 	} while (it != st);
 	std::cout << (*it).id() << std::endl;
-
-	it = predecessorMap[en];
-	//double prev = distanceMap[en];
+	it = en;
 	do {
 		std::cout << distanceMap[it] << "(" << it->id()  << ")" << " -> ";
 		//prev = distanceMap[it];
 		it = predecessorMap[it];
 	} while (it != st);
-	std::cout << distanceMap[it] << std::endl << std::endl;
+	std::cout << distanceMap[it] << std::endl << std::endl<< std::endl;
+
+	//isolate the separator
+	std::vector<vertex_descriptor_mesh> vertex_separator;
+
+
+	it = en;
+	while (it != st){ 
+		vertex_separator.push_back(it);
+		it = predecessorMap[it];
+	}
+	vertex_separator.push_back(st);
+
+	//print the separator
+	std::cout << "Check vertex_separator: " << (*vertex_separator.begin())->id();
+	for (std::vector<vertex_descriptor_mesh>::iterator jt = ++vertex_separator.begin(); jt != vertex_separator.end(); ++jt){
+		std::cout << " -> " << (*jt)->id();
+	}
+	std::cout << std::endl;
+
+
+	//do without the boost filtering
+	std::map<vertex_descriptor_mesh, int> component_map;
+
+	
+
+	label_components(mesh, vertex_separator, component_map);
+
+	//set all vertices in v_sep to be their own class
+	for (boost::tie(vit, ve) = vertices(mesh); vit != ve; ++vit)		
+		if (isin(*vit, vertex_separator))
+			component_map[*vit] = -1;
+
+	//print each vertex with its component
+	for (boost::tie(vit, ve) = vertices(mesh); vit != ve; ++vit)
+		std::cout << (*vit)->id() << "->" << component_map[*vit] << std::endl;
 
 
 
-	std::cout << "Difference: ";
-	std::cout << (en->point() - predecessorMap[en]->point()).squared_length() << std::endl << std::endl;
+
+
+	//now we have a component map, we want to create new polyhedron for each of the components.
+	Polyhedron mesh_p1;
+	Polyhedron mesh_p2; //one for each connected component
+
+	//somehow copy the mesh into these meshes.
+
+
 
 	return 0;
 }
@@ -582,7 +617,10 @@ int main(int argc, char* argv[])
 
 	//compare_differences_between_graph_and_mesh(filename);
 	dijkstra_with_mesh();
-	dijkstra_with_graph();
+	//dijkstra_with_graph();
+
+
+	//take the shortest path found by dijkstra and find the connected components of mesh\separator
 
 
 	//Parameterization_polyhedron_adaptor new_mesh = parameterize_mesh(mesh);

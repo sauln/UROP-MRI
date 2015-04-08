@@ -120,6 +120,10 @@ typedef boost::graph_traits<Polyhedron>::vertex_iterator vertex_iterator_mesh;
 typedef boost::graph_traits<Polyhedron>::edge_descriptor edge_descriptor_mesh;
 //typedef boost::graph_traits<Polyhedron>::edge_iterator edge_iterator_mesh;
 typedef Polyhedron::Edge_iterator edge_iterator_mesh;
+typedef Polyhedron::Facet_iterator facet_iterator_mesh;
+typedef Polyhedron::Facet_handle facet_descriptor_mesh;
+typedef Polyhedron::Halfedge_handle halfedge_handle_mesh;
+typedef Polyhedron::Point_3 point_mesh;
 
 typedef CGAL::Out_edge_iterator < Polyhedron > edge_it_mesh;
 

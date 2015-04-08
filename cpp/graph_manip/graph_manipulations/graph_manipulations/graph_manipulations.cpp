@@ -469,10 +469,8 @@ int go_deeper(		const Polyhedron & mesh,
 
 		//for each of vertex on the end of an out going edge,
 		for (boost::tie(beg, eeg) = out_edges(dog, mesh); beg != eeg; ++beg){
-			
 			vertex_descriptor_mesh fish = target(*beg, mesh);
 			//std::cout << "From " << vit->id() << " into " << fish->id() << std::endl;
-
 			if (!isin(fish, vertex_separator) && component.find(fish) == component.end()){
 				//std::cout << fish->id() << "+";
 				go_deeper(mesh, vertex_separator, component, component_number, fish);
@@ -602,7 +600,53 @@ int dijkstra_with_mesh(){
 	Polyhedron mesh_p2; //one for each connected component
 
 	//somehow copy the mesh into these meshes.
+	//
+	//this is also ahrd again. 
 
+	//indexing each facet for my own sanity while playing with these.
+	//can be removed soon
+	int count = 32;
+	for (facet_iterator_mesh john = mesh.facets_begin(); john != mesh.facets_end(); ++john){
+		john->id() = count;
+		++count;
+	}
+
+	std::cout << "There are " << count << " triangles" << std::endl;
+
+	vertex_descriptor_mesh av, bv, cv;
+
+
+	//this needs to be generalized!! and meshes need to be tested
+	for (Polyhedron::Facet_handle facet = mesh.facets_begin(); facet != mesh.facets_end(); ++facet){
+		
+		
+		halfedge_handle_mesh edge = facet->halfedge();
+		halfedge_handle_mesh new_triangle;
+		av = edge->vertex();
+		bv = edge->next()->vertex();
+		cv = edge->next()->next()->vertex();
+		std::cout << "vertices: " << av->id() << ", " << bv->id() << ", " << cv->id() << std::endl;
+
+
+		if ((component_map[av] == 1 || component_map[bv] == 1 || component_map[cv] == 1)
+			&& (component_map[av] == 0 || component_map[bv] == 0 || component_map[cv] == 0))
+			std::cout << "Something is wrong: some vertices are registering in both components!!" << std::endl;
+
+
+		else if (component_map[av] == 1 || component_map[bv] == 1 || component_map[cv] == 1){
+			std::cout << "Add a new triangle to mesh_p1" << std::endl;
+			new_triangle = mesh_p1.make_triangle(av->point(), bv->point(), cv->point());
+			new_triangle->id() = facet->id();
+		}
+		else if ((component_map[av] == 0 || component_map[bv] == 0 || component_map[cv] == 0)){
+			std::cout << "Add a new triangle to mesh_p2" << std::endl;
+			new_triangle = mesh_p2.make_triangle(av->point(), bv->point(), cv->point());
+			new_triangle->id() = facet->id();
+		}	
+		else{
+			std::cout << "some triangle not added to either mesh!!" << std::endl;
+		}
+	}
 
 
 	return 0;

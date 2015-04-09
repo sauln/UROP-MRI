@@ -5,7 +5,6 @@
 #define GRAPHS
 
 
-
 #include <boost/array.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list_io.hpp>
@@ -361,4 +360,7 @@ int print_all_vertices(default_Graph g){
 	return 0;
 
 }
+
+
+
 #endif

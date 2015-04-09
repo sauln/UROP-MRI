@@ -44,7 +44,7 @@ int naive_closest_vertex(default_Graph g, V p){
 
 	return min_ind;
 }
-int naive_closest_vertex(Polyhedron & g, const Point & p, vertex_descriptor_mesh & st){
+int naive_closest_vertex(Polyhedron & g, const Point & p, std::vector<vertex_descriptor_mesh> &vert_descript){
 	// cycle through each vertex and save the one closest to the point
 	// return the index for that vertex
 	//std::cout << "entry point of finding closest vertex, mesh " << std::endl;
@@ -55,7 +55,7 @@ int naive_closest_vertex(Polyhedron & g, const Point & p, vertex_descriptor_mesh
 	Vector r;
 
 	//std::cout << "Starting point: " << p << std::endl;
-
+	vertex_descriptor_mesh tmp;
 	vertex_iterator_mesh v, ve;
 	//vertex_iterator_fin v, ve;
 	//boost::tie(v, ve) = vertices(g);
@@ -65,13 +65,13 @@ int naive_closest_vertex(Polyhedron & g, const Point & p, vertex_descriptor_mesh
 		r = (*v)->point() - p;
 		//std::cout << "Point: " << (*v)->point() << " id: " << (*v)->id() << " and distance: " << r.squared_length() << std::endl;
 		if (r.squared_length() < min_dist){
-			st = (*v);
+			tmp = (*v);
 			min_dist = r.squared_length();
 			closest_id = (*v)->id();
 		}
 
 	}
-
+	vert_descript.push_back(tmp);
 	//std::cout << "closest index is: " << closest_id << " and that distance is: " << min_dist << std::endl;
 
 	return closest_id;
@@ -264,6 +264,181 @@ int print_connected_components(int num, std::vector<int> & component)
 	return 0;
 }
 
+
+
+
+
+int create_vertex_separator(default_Graph &g, V a, V b, std::vector<vertex_descriptor> & vertex_separator){
+	std::vector<vertex_descriptor> predecessors(num_vertices(g)); // To store parents
+	std::vector<Weight> distances(num_vertices(g)); // To store distances
+
+	find_shortest_path(g, a, b, predecessors, distances, vertex_separator);
+	return 0;
+}
+
+int separate_graph(default_Graph & g, V a, V b){
+
+
+	std::vector<vertex_descriptor> vertex_separator;
+	create_vertex_separator(g, a, b, vertex_separator);
+
+
+	//create a filtered graph that does not have the vertex_serparator in it.
+	FilteredGraphType filtered_graph = filter_separator(g, vertex_separator);
+
+	std::vector<int> component(num_vertices(filtered_graph));
+	int num = find_connected_components(filtered_graph, component);
+
+	print_connected_components(num, component);
+
+
+	return 0;
+}
+
+
+int test_line_parameterization(default_Graph & g){
+
+
+
+	//*******************************
+	//  Takes a linear vertex separator and straightens it out to the unit line
+	//  Tried to setup some basic border parameterization.
+	//  ended up being very complicated and it's better
+	//  to just use the CGAL methods
+	//*******************************
+
+	//create a deep copy of the graph
+	//(eventually make a map to associate the two)
+	//this graph we will slowly deform
+	default_Graph g_new(g);
+
+	// we want to try a simple paramterization
+	std::vector<vertex_descriptor> predecessors(num_vertices(g)); // To store parents
+	std::vector<Weight> distances(num_vertices(g)); // To store distances
+
+
+	//This code is going to look really ugly -
+	std::vector<V> corners_orig(4);
+	std::vector<V> corners_new(4);
+	//upper_left, upper_right, lower_left, lower_right;
+
+	//lets define our unit square.
+
+	//std::map<V, V> param_map;
+
+
+	write_point(corners_orig[0], 2.1, 2.1, 1.7);//upper_right
+	write_point(corners_orig[1], 2.0, 1.1, 2);//upper_left
+	write_point(corners_orig[2], 0.5, 2.4, 2.5); //lower_right
+	write_point(corners_orig[3], -0.3, 1.4, 1.5); //lower_left
+
+	write_point(corners_new[0], 1.0, 1.0, 0.0);//upper_right
+	write_point(corners_new[1], 1.0, 0.0, 0.0);//upper_left
+	write_point(corners_new[2], 0.0, 1.0, 0.0); //lower_right
+	write_point(corners_new[3], 0.0, 0.0, 0.0); //lower_left
+
+	//param_map.insert(std::pair<V, V>(corners_orig[1], corners_new[1]));
+	//param_map[corners_orig[1]] = corners_new[1];
+	//for (int i = 0; i < 4; i++)
+	//	param_map[corners_new[i]] =  corners_orig[i];
+
+	//to find the new location of a node:
+	//*******************
+	//  Let A,B be two corner points in our original space.
+	//  Let a,b be two corner points in our new space
+	//  a point C in [A,B] can be represented as a point c in [a,b]
+	//  and c =  ( d(A,C)/d(A,B) * (b-a)/d(a,b) ) + a
+	//
+	//*******************
+
+	std::vector<vertex_descriptor> vertex_separator;
+	find_shortest_path(g, corners_orig[0], corners_orig[1], predecessors, distances, vertex_separator);
+
+
+
+	int n = vertex_separator.size();
+	for (int i = 0; i < n; i++)
+		std::cout << vertex_separator[i] << std::endl;
+
+	//sets our new corners in place
+	g_new[vertex_separator[0]] = corners_new[0];
+	g_new[vertex_separator[n - 1]] = corners_new[1];
+
+	std::cout << "vertex_separator[0] is index:" << vertex_separator[0] << std::endl;
+	std::cout << "vertex_separator[n-1] is index:" << vertex_separator[n - 1] << std::endl;
+
+	std::cout << "CHECK " << std::endl << std::endl << std::endl;
+	for (int i = 0; i < n; i++)
+		std::cout << distances[vertex_separator[i]] << std::endl;
+	std::cout << std::endl;
+
+
+	double scale = distances[vertex_separator[0]]; // = d(A,B)
+	V direction = diff_direction(g_new[vertex_separator[0]], g_new[vertex_separator[n - 1]]); // = direction(A,B)
+	double dir_scale = diff_V(g_new[vertex_separator[n - 1]], g_new[vertex_separator[0]]);
+	V tmp;
+
+	//this takes each of the points and places them on a straight line between points a and b.
+	for (int i = 0; i < n - 1; i++){
+		double portion = distances[vertex_separator[i]]; // = d(A,C)
+		tmp = project_ish(scale, portion, direction, dir_scale, g_new[vertex_separator[n - 1]]);
+		g_new[vertex_separator[i]] = tmp;
+	}
+
+	for (int i = 0; i < n; i++)
+		print_point(g_new[vertex_separator[i]]);
+
+
+	return 0;
+}
+int dijkstra_with_graph(){
+	char* filename = "../../surface/surface.off";
+	default_Graph g;
+	g = read_graph(filename);
+
+
+	V start, end;
+	write_point(start, -5, -5, -5);
+	write_point(end, 5, 5, 5);
+
+
+	std::vector<vertex_descriptor> vertex_separator;
+	std::vector<vertex_descriptor> predecessors(num_vertices(g)); // To store parents
+	std::vector<Weight> distances(num_vertices(g)); // To store distances
+
+	int vert_1 = naive_closest_vertex(g, start);
+	int vert_2 = naive_closest_vertex(g, end);
+
+	IndexMap indexMap = get(vertex_index, g);
+	PredecessorMap predecessorMap(&predecessors[0], indexMap);
+	DistanceMap distanceMap(&distances[0], indexMap);
+
+
+	dijkstra_shortest_paths(g, vert_1, distance_map(distanceMap).predecessor_map(predecessorMap));
+
+	std::cout << "distance of (" << indexMap[vert_1] << ", " << indexMap[vert_2] << ") = " << distanceMap[vert_2] << std::endl;
+
+	int v = vert_2;
+
+	while (v != predecessorMap[v]){
+		std::cout << v << " -> ";
+		v = predecessorMap[v];
+	}
+	std::cout << v << std::endl;
+
+	v = predecessorMap[vert_2];
+	double prev = distanceMap[vert_2];
+
+	while (v != predecessorMap[v]){
+		std::cout << prev - distanceMap[v] << " -> ";
+		prev = distanceMap[v];
+		v = predecessorMap[v];
+	}
+
+	std::cout << distanceMap[v] << std::endl << std::endl;
+
+	return 0;
+}
 
 
 #endif

@@ -124,6 +124,12 @@ typedef Polyhedron::Facet_iterator facet_iterator_mesh;
 typedef Polyhedron::Facet_handle facet_descriptor_mesh;
 typedef Polyhedron::Halfedge_handle halfedge_handle_mesh;
 typedef Polyhedron::Point_3 point_mesh;
+typedef Polyhedron::HalfedgeDS             HalfedgeDS;
+
+typedef HalfedgeDS::Vertex   Vertex;
+typedef Vertex::Point Point3;
+typedef HalfedgeDS::Vertex_handle v_handle;
+
 
 typedef CGAL::Out_edge_iterator < Polyhedron > edge_it_mesh;
 

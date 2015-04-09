@@ -35,7 +35,8 @@
 
 #include <boost/graph/connected_components.hpp>
 #include <boost/graph/graph_utility.hpp>
-
+#include <boost/range/adaptor/map.hpp>
+#include <boost/range/algorithm/copy.hpp>
 
 //************************
 // CGAL Libraries
@@ -52,6 +53,8 @@
 #include <CGAL/Eigen_solver_traits.h>
 #include <CGAL/Mean_value_coordinates_parameterizer_3.h>
 #include <CGAL/Parameterization_mesh_feature_extractor.h>
+
+#include <CGAL/Polyhedron_incremental_builder_3.h>
 
 #include <CGAL/boost/graph/graph_traits_Polyhedron_3.h>
 
@@ -79,19 +82,20 @@ using namespace boost;
 
 
 // read the mesh from our file 
-//int read_mesh(char* filename, Polyhedron & mesh);
-//Parameterization_polyhedron_adaptor parameterize_mesh(Polyhedron & mesh);
-
+int read_mesh(char* filename, Polyhedron & mesh);
+Parameterization_polyhedron_adaptor parameterize_mesh(Polyhedron & mesh);
+int print_mesh(const Polyhedron & mesh, const Parameterization_polyhedron_adaptor & mesh_adaptor);
 
 
 //  This function will take a graph and a set of points
 //  It will generate the vertex separator
 //int create_vertex_separator(default_Graph &g, V a, V b, std::vector<vertex_descriptor> & vertex_separator);
-//int print_mesh(const Polyhedron & mesh, const Parameterization_polyhedron_adaptor & mesh_adaptor);
 
 
 
-/*
+
+Polyhedron partial_mesh_builder(Polyhedron &mesh, std::map<vertex_descriptor_mesh, int> component_map, int k);
+
 static bool write_file_eps(const Parameterization_polyhedron_adaptor& mesh_adaptor,
 	const char *pFilename,
 	double scale = 500.0)
@@ -162,7 +166,7 @@ static bool write_file_eps(const Parameterization_polyhedron_adaptor& mesh_adapt
 	out << "showpage" << std::endl;
 	return true;
 }
-*/
+
 
 //Read in a mesh from a file.
 int read_mesh(char* filename, Polyhedron & mesh){
@@ -184,8 +188,6 @@ int read_mesh(char* filename, Polyhedron & mesh){
 	return 0;
 }
 
-
-/*
 //Parameterize the map and return the mesh adaptor
 Parameterization_polyhedron_adaptor parameterize_mesh(Polyhedron & mesh){
 	std::cout << "parameterize mesh and return parameterization" << std::endl;
@@ -216,10 +218,10 @@ Parameterization_polyhedron_adaptor parameterize_mesh(Polyhedron & mesh){
 
 	return mesh_adaptor;
 }
-*/
-/*
+
+
 //Save the mesh as .off and .eps (i think the .off is not printing quite right.
-int save_mesh(Parameterization_polyhedron_adaptor & mesh_adaptor)
+int save_mesh(Parameterization_polyhedron_adaptor & mesh_adaptor, char * filename)
 {
 	std::cout << "save mesh " << std::endl;
 	//***************************************
@@ -236,7 +238,7 @@ int save_mesh(Parameterization_polyhedron_adaptor & mesh_adaptor)
 
 	// Write Postscript file
 	// this outputs the new 2d mesh
-	if (!write_file_eps(mesh_adaptor, "dump2.eps"))
+	if (!write_file_eps(mesh_adaptor, filename))
 	{
 		std::cerr << "Error: cannot write file " <<  "dump2.eps" << std::endl;
 		return EXIT_FAILURE;
@@ -244,8 +246,8 @@ int save_mesh(Parameterization_polyhedron_adaptor & mesh_adaptor)
 	
 	return 0; 
 
-}*/
-/*
+}
+
 //Print the mesh to the console line
 int print_mesh(const Polyhedron & mesh, const Parameterization_polyhedron_adaptor & mesh_adaptor){
 	// Raw output: dump (u,v) pairs
@@ -264,7 +266,7 @@ int print_mesh(const Polyhedron & mesh, const Parameterization_polyhedron_adapto
 
 	return 0;
 }
-*/
+
 
 int create_vertex_separator(default_Graph &g, V a, V b, std::vector<vertex_descriptor> & vertex_separator){
 	std::vector<vertex_descriptor> predecessors(num_vertices(g)); // To store parents
@@ -448,10 +450,26 @@ int dijkstra_with_graph(){
 //  This function does everything we need from start to finish
 //
 //***************************************
-
-bool isin(vertex_descriptor_mesh vit, std::vector<vertex_descriptor_mesh> vertex_separator){
-	return std::find(vertex_separator.begin(), vertex_separator.end(), vit) != vertex_separator.end();
+bool isin(std::set<int> keys, int item){
+	return std::find(keys.begin(), keys.end(), item) != keys.end();
 }
+
+bool isin(vertex_descriptor_mesh vit, std::vector<vertex_descriptor_mesh> sep){
+	return std::find(sep.begin(), sep.end(), vit) != sep.end();
+}
+
+int print_vertices_of_mesh(Polyhedron& mesh){
+	vertex_iterator_mesh vit, ve;
+
+	std::cout << "Vertices in first new mesh:" << num_vertices(mesh) << ". Edges in mesh: " << num_edges(mesh) << std::endl;
+	for (boost::tie(vit, ve) = boost::vertices(mesh); vit != ve; ++vit)
+		std::cout << (*vit)->id() << ", ";
+	std::cout << std::endl;
+	return 0;
+}
+
+
+
 
 int go_deeper(		const Polyhedron & mesh, 
 					const std::vector<vertex_descriptor_mesh> & vertex_separator, 
@@ -506,7 +524,8 @@ int label_components(const Polyhedron & mesh, const std::vector<vertex_descripto
 
 
 int dijkstra_with_mesh(){
-
+	vertex_iterator_mesh vit, ve;
+	vertex_descriptor_mesh st, en, it;
 
 	//this will be a completely self contained version of dijkstra with mesh
 
@@ -518,7 +537,7 @@ int dijkstra_with_mesh(){
 	read_mesh(filename, mesh);
 
 	// Associate indices to the vertices
-	vertex_iterator_mesh vit, ve;
+
 	int index = 0;
 	for (boost::tie(vit, ve) = boost::vertices(mesh); vit != ve; ++vit){
 		(*vit)->id() = index++;
@@ -528,7 +547,7 @@ int dijkstra_with_mesh(){
 	std::vector<vertex_descriptor_mesh> predecessors(num_vertices(mesh)); // To store parents
 	std::vector<Weight> distances(num_vertices(mesh)); // To store distances
 
-	vertex_descriptor_mesh st, en;
+
 	int vert_1 = naive_closest_vertex(mesh, start, st);
 	int vert_2 = naive_closest_vertex(mesh, end, en);
 
@@ -538,28 +557,8 @@ int dijkstra_with_mesh(){
 
 	dijkstra_shortest_paths(mesh, st, distance_map(distanceMap).predecessor_map(predecessorMap).distance_combine(dist_combine()).distance_compare(dist_compare()));
 
-	std::cout << "distance of (" << indexMap[st] << ", " << indexMap[en] << ") = " << distanceMap[en] << std::endl;
-
-
-	//print the shortest path
-	vertex_descriptor_mesh it = en;
-	do {
-		std::cout << (*it).id() << " -> ";
-		it = predecessorMap[it];
-	} while (it != st);
-	std::cout << (*it).id() << std::endl;
-	it = en;
-	do {
-		std::cout << distanceMap[it] << "(" << it->id()  << ")" << " -> ";
-		//prev = distanceMap[it];
-		it = predecessorMap[it];
-	} while (it != st);
-	std::cout << distanceMap[it] << std::endl << std::endl<< std::endl;
-
 	//isolate the separator
 	std::vector<vertex_descriptor_mesh> vertex_separator;
-
-
 	it = en;
 	while (it != st){ 
 		vertex_separator.push_back(it);
@@ -567,103 +566,148 @@ int dijkstra_with_mesh(){
 	}
 	vertex_separator.push_back(st);
 
-	//print the separator
-	std::cout << "Check vertex_separator: " << (*vertex_separator.begin())->id();
-	for (std::vector<vertex_descriptor_mesh>::iterator jt = ++vertex_separator.begin(); jt != vertex_separator.end(); ++jt){
-		std::cout << " -> " << (*jt)->id();
-	}
-	std::cout << std::endl;
-
-
-	//do without the boost filtering
-	std::map<vertex_descriptor_mesh, int> component_map;
-
-	
-
+	// create a component map that labels each vertex by which component it is in, -1 if in the vertex separator
+	std::map<vertex_descriptor_mesh, int> component_map; 
 	label_components(mesh, vertex_separator, component_map);
 
 	//set all vertices in v_sep to be their own class
-	for (boost::tie(vit, ve) = vertices(mesh); vit != ve; ++vit)		
+	for (boost::tie(vit, ve) = boost::vertices(mesh); vit != ve; ++vit)		
 		if (isin(*vit, vertex_separator))
 			component_map[*vit] = -1;
 
-	//print each vertex with its component
-	for (boost::tie(vit, ve) = vertices(mesh); vit != ve; ++vit)
-		std::cout << (*vit)->id() << "->" << component_map[*vit] << std::endl;
-
-
-
-
-
-	//now we have a component map, we want to create new polyhedron for each of the components.
-	Polyhedron mesh_p1;
-	Polyhedron mesh_p2; //one for each connected component
-
-	//somehow copy the mesh into these meshes.
-	//
-	//this is also ahrd again. 
-
-	//indexing each facet for my own sanity while playing with these.
-	//can be removed soon
-	int count = 32;
-	for (facet_iterator_mesh john = mesh.facets_begin(); john != mesh.facets_end(); ++john){
-		john->id() = count;
-		++count;
-	}
-
-	std::cout << "There are " << count << " triangles" << std::endl;
-
-	vertex_descriptor_mesh av, bv, cv;
-
-
-	//this needs to be generalized!! and meshes need to be tested
-	for (Polyhedron::Facet_handle facet = mesh.facets_begin(); facet != mesh.facets_end(); ++facet){
-		
-		
-		halfedge_handle_mesh edge = facet->halfedge();
-		halfedge_handle_mesh new_triangle;
-		av = edge->vertex();
-		bv = edge->next()->vertex();
-		cv = edge->next()->next()->vertex();
-		std::cout << "vertices: " << av->id() << ", " << bv->id() << ", " << cv->id() << std::endl;
-
-
-		if ((component_map[av] == 1 || component_map[bv] == 1 || component_map[cv] == 1)
-			&& (component_map[av] == 0 || component_map[bv] == 0 || component_map[cv] == 0))
-			std::cout << "Something is wrong: some vertices are registering in both components!!" << std::endl;
-
-
-		else if (component_map[av] == 1 || component_map[bv] == 1 || component_map[cv] == 1){
-			std::cout << "Add a new triangle to mesh_p1" << std::endl;
-			new_triangle = mesh_p1.make_triangle(av->point(), bv->point(), cv->point());
-			new_triangle->id() = facet->id();
-		}
-		else if ((component_map[av] == 0 || component_map[bv] == 0 || component_map[cv] == 0)){
-			std::cout << "Add a new triangle to mesh_p2" << std::endl;
-			new_triangle = mesh_p2.make_triangle(av->point(), bv->point(), cv->point());
-			new_triangle->id() = facet->id();
-		}	
-		else{
-			std::cout << "some triangle not added to either mesh!!" << std::endl;
+	//isolate values for easy existance checking
+	std::set<int> values;
+	for (std::map<vertex_descriptor_mesh, int>::iterator k = component_map.begin(); k != component_map.end(); ++k){
+		if (k->second != -1){
+			values.insert(k->second);
 		}
 	}
 
+
+
+	Polyhedron mesh_p1 = partial_mesh_builder(mesh, component_map, 0);
+	Polyhedron mesh_p2 = partial_mesh_builder(mesh, component_map, 1);
+
+	//print_vertices_of_mesh(mesh_p1);
+
+	//print_vertices_of_mesh(mesh_p2);
+	if (!mesh_p1.is_valid())
+		std::cout << "cutting the mesh into pieces did not work" << std::endl;
+
+	//std::cout << mesh_p1.is_valid() << mesh_p1.is_pure_triangle() << std::endl;
+	//Parameterize our new meshes
+	Parameterization_polyhedron_adaptor new_p1 = parameterize_mesh(mesh_p1);
+	Parameterization_polyhedron_adaptor new_p2 = parameterize_mesh(mesh_p2);
+
+	//for (boost::tie(vit, ve) = vertices(mesh_p1); vit != ve; ++vit){
+	//	std::cout << "vertice: " << (*vit)->id() << " at (" << (*vit)->point().x() << ", " << (*vit)->point().y() << ", " << (*vit)->point().z() << ") " << std::endl;
+	//}
+		
+
+	save_mesh(new_p1, "dumpMesh_p1.eps");
+	save_mesh(new_p2, "dumpMesh_p2.eps");
 
 	return 0;
 }
 
 
+Polyhedron partial_mesh_builder(Polyhedron &mesh, std::map<vertex_descriptor_mesh, int> component_map, int k){
+	std::cout << "begin mesh builder" << std::endl;
+
+
+	std::map<int, int> relative_index_map;
+	std::set<int> keys;
+	Polyhedron new_mesh;
+	vertex_iterator_mesh vit, ve;
+	v_handle n_v;
+	int av, bv, cv;
+
+
+
+	CGAL::Polyhedron_incremental_builder_3<HalfedgeDS> B(new_mesh.hds(), true);
+	B.begin_surface(100, 100, 300);
+
+
+	//Add the vertices new this new mesh and create map between the two.
+	int v_index = 0;
+	for (boost::tie(vit, ve) = vertices(mesh); vit != ve; ++vit){
+		if (component_map[(*vit)] == k || component_map[(*vit)] == -1){
+			//std::cout << "placed at: " << v_index << " new id is: " << (*vit)->id() << std::endl;
+			n_v = B.add_vertex((*vit)->point());
+			relative_index_map[(*vit)->id()] = v_index;
+			n_v->id() = (*vit)->id();
+			++v_index;
+		}
+	}
+
+
+
+	//create an easy accessor for the keys of the vertices we're using
+
+	for (std::map<int, int>::iterator k = relative_index_map.begin(); k != relative_index_map.end(); ++k){
+		keys.insert(k->first);
+	}
+
+
+
+	//Go through each triangle on our original mesh and if its vertices are in our new mesh, add the triangle
+	for (Polyhedron::Facet_handle facet = mesh.facets_begin(); facet != mesh.facets_end(); ++facet){
+		av = facet->halfedge()->vertex()->id();
+		bv = facet->halfedge()->next()->vertex()->id();
+		cv = facet->halfedge()->next()->next()->vertex()->id();
+
+		//if this triangle in completely inside our new mesh
+		if (isin(keys, av) && isin(keys, bv) && isin(keys, cv))
+		{
+
+			//std::cout << "add triangle: " << av << ", " << bv << ", " << cv << std::endl;
+			//add this triangle
+			B.begin_facet();
+			B.add_vertex_to_facet(relative_index_map[av]);
+			B.add_vertex_to_facet(relative_index_map[bv]);
+			B.add_vertex_to_facet(relative_index_map[cv]);
+			B.end_facet();
+		}
+
+	}
+
+
+
+	B.end_surface();
+
+
+	//remove all the extra vertices from vertex_separator that are not attached to our new surface.
+	int deleted = new_mesh.keep_largest_connected_components(1);
+	
+	return new_mesh;
+
+}
+
+
+
+
+
+int test_real_images(){
+	char* filename = "../../surface/surface.off";
+	Polyhedron mesh;
+	int fail = read_mesh(filename, mesh);
+	std::cout << "fail if 1, sucess if 0: " << fail << std::endl;
+	std::cout << "is valid: " << mesh.is_valid() << std::endl;
+	std::cout << "number of vertices: " << num_vertices(mesh) << std::endl;
+	return 0;
+}
+
 
 int main(int argc, char* argv[])
 {
 
-	char* filename = "../../surface/surface.off";
+	char* filename = "../../surface/surface_cleaned.off";
 
-	//compare_differences_between_graph_and_mesh(filename);
+	
 	dijkstra_with_mesh();
 	//dijkstra_with_graph();
 
-
+	//test_real_images();
 	//take the shortest path found by dijkstra and find the connected components of mesh\separator
 
 

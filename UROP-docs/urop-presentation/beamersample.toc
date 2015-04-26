@@ -1,0 +1,4 @@
+\beamer@endinputifotherversion {3.36pt}
+\beamer@sectionintoc {1}{What is Kinesio Tape?}{2}{0}{1}
+\beamer@sectionintoc {2}{What do we do about it?}{10}{0}{2}
+\beamer@sectionintoc {3}{What do we do with these images?}{12}{0}{3}

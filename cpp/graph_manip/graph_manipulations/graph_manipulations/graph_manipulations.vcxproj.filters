@@ -24,11 +24,17 @@
     <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="tools.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="KGonBorderParameterizer2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="KGonParameterizer2.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="graphs.h">
-      <Filter>Source Files</Filter>
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tools.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

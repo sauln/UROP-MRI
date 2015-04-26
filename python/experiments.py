@@ -66,9 +66,9 @@ def compareEdgeLengthsBetweenShapes(drift):
     t = 0
     c = 0
     for shape in control:
-        c += shape.afl
+        c += shape.frameLength()
     for shape in test:
-        t += shape.afl
+        t += shape.frameLength()
             
     return (t/len(control), c/len(test))
  

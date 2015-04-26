@@ -74,6 +74,7 @@
 
 #include "graphs.h"
 #include "tools.h"
+#include "KGonBorderParameterizer2.h"
 
 
 using namespace boost;
@@ -87,9 +88,21 @@ Parameterization_polyhedron_adaptor parameterize_mesh(Polyhedron & mesh);
 int print_mesh(const Polyhedron & mesh, const Parameterization_polyhedron_adaptor & mesh_adaptor);
 
 
-//  This function will take a graph and a set of points
-//  It will generate the vertex separator
-//int create_vertex_separator(default_Graph &g, V a, V b, std::vector<vertex_descriptor> & vertex_separator);
+
+
+//the frame defines our edges
+struct Frame{
+	std::vector<Point> points;
+	std::vector<E> edges;
+};
+
+
+
+struct meshes{
+	
+	std::vector<Parameterization_polyhedron_adaptor> parametized_meshes;
+	std::vector<Polyhedron> original_meshes;
+};
 
 
 
@@ -204,6 +217,10 @@ Parameterization_polyhedron_adaptor parameterize_mesh(Polyhedron & mesh){
 	// Assume mesh is a topological disk
 	Parameterization_polyhedron_adaptor mesh_adaptor(mesh);
 
+
+
+	// we need to set the corners
+
 	// Parameterize our mesh according to Parameterizer specs
 	Parameterizer::Error_code err = CGAL::parameterize(mesh_adaptor, Parameterizer());
 
@@ -257,6 +274,23 @@ int save_mesh(Parameterization_polyhedron_adaptor & mesh_adaptor, char * filenam
 
 }
 
+
+int save_parameterized_meshes(meshes mesh_set){
+	std::cout << "Try saving the meshes" << std::endl;
+
+	char buffer[32]; // The filename buffer.
+	int index_f = 0;
+	for (std::vector<Parameterization_polyhedron_adaptor>::iterator ad_it = mesh_set.parametized_meshes.begin(); ad_it != mesh_set.parametized_meshes.end(); ++ad_it){
+		// Put "file" then k then ".txt" in to filename.
+		sprintf(buffer, "../output_surfaces/file%i.eps", index_f);
+		++index_f;
+		save_mesh((*ad_it), buffer);
+	}
+
+	return 0;
+}
+
+
 //Print the mesh to the console line
 int print_mesh(const Polyhedron & mesh, const Parameterization_polyhedron_adaptor & mesh_adaptor){
 	// Raw output: dump (u,v) pairs
@@ -282,10 +316,7 @@ int print_mesh(const Polyhedron & mesh, const Parameterization_polyhedron_adapto
 
 
 
-//***************************************
-//
-//  This function does everything we need from start to finish
-//
+
 //***************************************
 bool isin(std::set<int> keys, int item){
 	return std::find(keys.begin(), keys.end(), item) != keys.end();
@@ -305,14 +336,12 @@ int print_vertices_of_mesh(Polyhedron& mesh){
 	return 0;
 }
 
-
-
 int go_deeper(		const Polyhedron & mesh, 
 					const std::set<vertex_descriptor_mesh> & vertex_separator, 
 					std::map<vertex_descriptor_mesh, int>& component, 
 					int & component_number, vertex_descriptor_mesh vit){
 
-
+	//this is the poorly named recursive part of the breadth first search.
 	if (!isin(vit, vertex_separator) && component.find(vit) == component.end())
 	{
 		component[vit] = component_number;
@@ -380,41 +409,49 @@ int label_components(	const Polyhedron & mesh,
 	return 0;
 }
 
-
-
-int create_frame(std::vector<Point> &points, std::vector<E> &edges){
+int create_frame(Frame &frame){
 	//this will simulate the act of reading the landmarks from a graph
 	//take a filename, return a list of landmarks
+	//std::vector<Point> &points, std::vector<E> &edges
 	
-	points.push_back(Point(5, 5, 5));
-	points.push_back(Point(-5, 5, 5));
-	points.push_back(Point(-5, -5, 5));
-	points.push_back(Point(5, -5, 5));
-	points.push_back(Point(5, 5, -5));
-	points.push_back(Point(-5, 5, -5));
-	points.push_back(Point(-5, -5, -5));
-	points.push_back(Point(5, -5, -5));
 
-	edges.push_back(E(0, 1));
-	edges.push_back(E(1, 2));
-	edges.push_back(E(2, 3));
-	edges.push_back(E(3, 0));
-	edges.push_back(E(4, 5));
-	edges.push_back(E(5, 6));
-	edges.push_back(E(6, 7));
-	edges.push_back(E(7, 4));
-	edges.push_back(E(0, 4));
-	edges.push_back(E(1, 5));
-	edges.push_back(E(2, 6));
-	edges.push_back(E(3, 7));
+	//				/--a
+	//			d--/   |   b
+	//			|	c  |   |
+	//			|   |  |   |
+	//			|	|  e   |
+	//			h	|	   f
+	//				g
 
+
+
+	frame.points.push_back(Point(5, 5, 5));
+	frame.points.push_back(Point(-5, 5, 5));
+	frame.points.push_back(Point(-5, -5, 5));
+	frame.points.push_back(Point(5, -5, 5));
+	frame.points.push_back(Point(5, 5, -5));
+	frame.points.push_back(Point(-5, 5, -5));
+	frame.points.push_back(Point(-5, -5, -5));
+	frame.points.push_back(Point(5, -5, -5));
+
+	frame.edges.push_back(E(0, 1));
+	frame.edges.push_back(E(1, 2));
+	frame.edges.push_back(E(2, 3));
+	frame.edges.push_back(E(3, 0));
+	frame.edges.push_back(E(4, 5));
+	frame.edges.push_back(E(5, 6));
+	frame.edges.push_back(E(6, 7));
+	frame.edges.push_back(E(7, 4));
+	frame.edges.push_back(E(0, 4));
+	frame.edges.push_back(E(1, 5));
+	frame.edges.push_back(E(2, 6));
+	frame.edges.push_back(E(3, 7));
+	
 
 
 
 	return 0;
 }
-
-
 
 int dijkstra_create_separator(Polyhedron &mesh, 
 	std::set<vertex_descriptor_mesh> &vertex_separator, 
@@ -466,8 +503,7 @@ int dijkstra_create_separator(Polyhedron &mesh,
 } // dijkstra_create_separator
 
 
-//now I will compartmentalize everything so it can be generalized.
-int split_and_parameterize_mesh(Polyhedron &mesh, std::vector<Point> &points, std::vector<E> &edges){
+int split_and_parameterize_mesh(Polyhedron &mesh, std::vector<Point> &points, std::vector<E> &edges, meshes & mesh_set){
 	
 	
 	vertex_iterator_mesh vit, ve;
@@ -487,15 +523,6 @@ int split_and_parameterize_mesh(Polyhedron &mesh, std::vector<Point> &points, st
 	}
 
 
-
-
-
-
-	//for (int i = 0; i < vert_descript.size(); i++)
-	//	std::cout << "Item " << i << " is mesh vertex number " << vert_descript[i]->id() << std::endl;
-
-
-
 	//create vertex separator
 	std::set<vertex_descriptor_mesh> vertex_separator;
 	dijkstra_create_separator(mesh, vertex_separator, vert_descript, edges);
@@ -511,45 +538,47 @@ int split_and_parameterize_mesh(Polyhedron &mesh, std::vector<Point> &points, st
 	label_components(mesh, vertex_separator, component_map, values);
 
 	
-
-	
-
-
-	std::vector<Polyhedron> new_meshes;
 	std::vector<Parameterization_polyhedron_adaptor> mesh_adaptors;
 
+	//create new meshes from the connected components
 	for (std::set<int>::iterator val_it = values.begin(); val_it != values.end(); ++val_it){
-		new_meshes.push_back(partial_mesh_builder(mesh, component_map, (*val_it)));
+		mesh_set.original_meshes.push_back(partial_mesh_builder(mesh, component_map, (*val_it)));
 	}
 
-	for (std::vector<Polyhedron>::iterator p_it = new_meshes.begin(); p_it != new_meshes.end(); ++p_it){
+
+	//parameterize each new mesh
+	for (std::vector<Polyhedron>::iterator p_it = mesh_set.original_meshes.begin(); p_it != mesh_set.original_meshes.end(); ++p_it){
 		if (!(*p_it).is_valid()){
 			std::cout << "cutting the mesh into pieces did not work" << std::endl;
-		}
-		else{
-
+		}else{
 			//Parameterize our new meshes
-			mesh_adaptors.push_back(parameterize_mesh(*p_it));
+			mesh_set.parametized_meshes.push_back(parameterize_mesh(*p_it));
 		}
 	}
 
-	char buffer[32]; // The filename buffer.
-	int index_f = 0;
-	for (std::vector<Parameterization_polyhedron_adaptor>::iterator ad_it = mesh_adaptors.begin(); ad_it != mesh_adaptors.end(); ++ad_it){
-		// Put "file" then k then ".txt" in to filename.
-		sprintf(buffer,  "../file%i.eps", index_f);
-		++index_f;
-		save_mesh((*ad_it), buffer);
-	}
+
+
+
+	//save each new mesh
+
+
 
 	return 0;
 }
 
 
+
+
+
 Polyhedron partial_mesh_builder(Polyhedron &mesh, std::map<vertex_descriptor_mesh, int> &component_map, int k){
+	/// 
+	/// Create a new mesh for the component number k according to the component map
+	///
+	///
+
+
+
 	std::cout << "begin mesh builder" << std::endl;
-
-
 	std::map<int, int> relative_index_map;
 	std::set<int> keys;
 	Polyhedron new_mesh;
@@ -557,11 +586,8 @@ Polyhedron partial_mesh_builder(Polyhedron &mesh, std::map<vertex_descriptor_mes
 	v_handle n_v;
 	int av, bv, cv;
 
-
-
 	CGAL::Polyhedron_incremental_builder_3<HalfedgeDS> B(new_mesh.hds(), true);
 	B.begin_surface(100, 100, 300);
-
 
 	//Add the vertices new this new mesh and create map between the two.
 	int v_index = 0;
@@ -574,8 +600,6 @@ Polyhedron partial_mesh_builder(Polyhedron &mesh, std::map<vertex_descriptor_mes
 			++v_index;
 		}
 	}
-
-
 
 	//create an easy accessor for the keys of the vertices we're using
 
@@ -594,7 +618,6 @@ Polyhedron partial_mesh_builder(Polyhedron &mesh, std::map<vertex_descriptor_mes
 		//if this triangle in completely inside our new mesh
 		if (isin(keys, av) && isin(keys, bv) && isin(keys, cv))
 		{
-
 			//std::cout << "add triangle: " << av << ", " << bv << ", " << cv << std::endl;
 			//add this triangle
 			B.begin_facet();
@@ -606,10 +629,7 @@ Polyhedron partial_mesh_builder(Polyhedron &mesh, std::map<vertex_descriptor_mes
 
 	}
 
-
-
 	B.end_surface();
-
 
 	//remove all the extra vertices from vertex_separator that are not attached to our new surface.
 	int deleted = new_mesh.keep_largest_connected_components(1);
@@ -617,10 +637,6 @@ Polyhedron partial_mesh_builder(Polyhedron &mesh, std::map<vertex_descriptor_mes
 	return new_mesh;
 
 }
-
-
-
-
 
 int test_real_images(){
 	char* filename = "../../surface/surface.off";
@@ -636,27 +652,21 @@ int test_real_images(){
 int main(int argc, char* argv[])
 {
 
-	std::vector<Point> points;
-	std::vector<E> edges;
-	create_frame(points, edges);
+	Frame frame;
+	create_frame(frame);// points, edges);
 
 	char* filename = "../../surface/sphere.off";
 	Polyhedron mesh;
 	read_mesh(filename, mesh);
 
+	meshes mesh_set;
+	//std::vector<Polyhedron> new_meshes;
 
+	split_and_parameterize_mesh(mesh, frame.points, frame.edges, mesh_set);
+	std::cout << "finish parametrization" << std::endl;
+	save_parameterized_meshes(mesh_set);
 
-
-
-	split_and_parameterize_mesh(mesh, points, edges);
-	//dijkstra_with_graph();
-
-	//test_real_images();
-	//take the shortest path found by dijkstra and find the connected components of mesh\separator
-
-
-	//Parameterization_polyhedron_adaptor new_mesh = parameterize_mesh(mesh);
-	//save_mesh(new_mesh);
+	std::cout << "End" << std::endl;
 
 	int h;
 	std::cin >> h;

@@ -14,6 +14,9 @@
 #include <CGAL/boost/graph/dijkstra_shortest_paths.hpp>
 
 //These need to be templated into one function
+
+
+/*
 int naive_closest_vertex(default_Graph g, V p);
 int naive_closest_test(const default_Graph & g, V p ){
 	// this is a really shoddy test that can be expanded. 
@@ -44,6 +47,12 @@ int naive_closest_vertex(default_Graph g, V p){
 
 	return min_ind;
 }
+
+*/
+
+
+
+
 int naive_closest_vertex(Polyhedron & g, const Point & p, std::vector<vertex_descriptor_mesh> &vert_descript){
 	// cycle through each vertex and save the one closest to the point
 	// return the index for that vertex
@@ -76,7 +85,28 @@ int naive_closest_vertex(Polyhedron & g, const Point & p, std::vector<vertex_des
 
 	return closest_id;
 }
-int naive_closest_vertex(Finite_Polyhedron & g, const Point & p){
+FilteredMeshType filter_out_separator(Polyhedron & mesh, std::vector<vertex_descriptor_mesh> &vertex_separator){
+	/* Create a filtered graph of original graph without the vertex separator */
+
+	std::cout << "Filter out vertex separator" << std::endl;
+
+	//initialize filter -- turning this into a class would make this a little more automatic.
+	vertex_id_filter_mesh<Polyhedron> filter;
+	filter.vertex_separator = vertex_separator;
+	filter.size_of_vs = vertex_separator.size();
+
+
+	//creating filtered  graph
+
+	FilteredMeshType filtered_graph(mesh, boost::keep_all(), filter); // (graph, EdgePredicate, VertexPredicate)
+
+
+	print_graph(filtered_graph);
+	return filtered_graph;
+}
+
+
+/*int naive_closest_vertex(Finite_Polyhedron & g, const Point & p){
 	// cycle through each vertex and save the one closest to the point
 	// return the index for that vertex
 	std::cout << "entry point of finding closest vertex, mesh " << std::endl;
@@ -106,7 +136,7 @@ int naive_closest_vertex(Finite_Polyhedron & g, const Point & p){
 	//std::cout << "closest index is: " << closest_id << " and that distance is: " << min_dist << std::endl;
 
 	return closest_id;
-}
+}*/
 
 
 Point V2Point(const V & v){
@@ -114,6 +144,8 @@ Point V2Point(const V & v){
 	return p;
 }
 
+
+/*
 int find_shortest_path(Finite_Polyhedron & g, Point start, Point end,
 	std::vector<vertex_descriptor_mesh> &predecessors,
 	std::vector<Weight> &distances,
@@ -134,14 +166,16 @@ int find_shortest_path(Finite_Polyhedron & g, Point start, Point end,
 	IndexMap_mesh indexMap = get(vertex_index, g.m_g);
 	PredecessorMap_mesh predecessorMap(&predecessors[0], indexMap);
 	DistanceMap_mesh distanceMap(&distances[0], indexMap);
+	sdf
 	// Compute shortest paths from vert_1 to all vertices
 	//dijkstra_shortest_paths(g.m_g, vert_1, distance_map(distanceMap).predecessor_map(predecessorMap));
 	//std::cout << "distance of (" << indexMap[vert_1] << ", " << indexMap[vert_2] << ") = " << distanceMap[vert_2] << std::endl;
-	// Create vertex separator - the shortest path from vert_1 to vert_2 */
+	// Create vertex separator - the shortest path from vert_1 to vert_2 
 	//std::vector<vertex_descriptor>::iterator it;
 	//int v = vert_2;
 	//vertex_separator.push_back(v);
 	//while (v != predecessorMap[v]){
+sdf
 	//	v = predecessorMap[v];
 	//	vertex_separator.push_back(v);
 	//}
@@ -154,9 +188,9 @@ int find_shortest_path(Finite_Polyhedron & g, Point start, Point end,
 
 	return 0;
 
-}
+}*/
 
-
+/*
 int find_shortest_path(default_Graph & g, V start, V end, 
 	std::vector<vertex_descriptor> &predecessors, 
 	std::vector<Weight> &distances, 
@@ -178,7 +212,7 @@ int find_shortest_path(default_Graph & g, V start, V end,
 	dijkstra_shortest_paths(g, vert_1, distance_map(distanceMap).predecessor_map(predecessorMap));
 	//std::cout << "distance of (" << indexMap[vert_1] << ", " << indexMap[vert_2] << ") = " << distanceMap[vert_2] << std::endl;
 	
-	/* Create vertex separator - the shortest path from vert_1 to vert_2 */
+	 Create vertex separator - the shortest path from vert_1 to vert_2 
 	std::vector<vertex_descriptor>::iterator it;
 	int v = vert_2;
 	vertex_separator.push_back(v);
@@ -187,7 +221,7 @@ int find_shortest_path(default_Graph & g, V start, V end,
 		vertex_separator.push_back(v);
 	}
 
-	/* Print vertex separator */
+ Print vertex separator 
 	//for (it = vertex_separator.begin(); it != vertex_separator.end(); it++){
 	//	std::cout << *it << " -> ";
 	//}
@@ -198,9 +232,12 @@ int find_shortest_path(default_Graph & g, V start, V end,
 
 }
 
+*/
 
+
+/*
 FilteredGraphType filter_separator(default_Graph & g, std::vector<vertex_descriptor> &vertex_separator){
-	/* Create a filtered graph of original graph without the vertex separator */
+	 Create a filtered graph of original graph without the vertex separator 
 
 	std::cout << "Filter out vertex separator" << std::endl;
 
@@ -218,39 +255,21 @@ FilteredGraphType filter_separator(default_Graph & g, std::vector<vertex_descrip
 	print_graph(filtered_graph);
 	return filtered_graph;
 }
-
-
-FilteredMeshType filter_out_separator(Polyhedron & mesh, std::vector<vertex_descriptor_mesh> &vertex_separator){
-	/* Create a filtered graph of original graph without the vertex separator */
-
-	std::cout << "Filter out vertex separator" << std::endl;
-
-	//initialize filter -- turning this into a class would make this a little more automatic.
-	vertex_id_filter_mesh<Polyhedron> filter;
-	filter.vertex_separator = vertex_separator;
-	filter.size_of_vs = vertex_separator.size();
-
-
-	//creating filtered  graph
-
-	FilteredMeshType filtered_graph(mesh, boost::keep_all(), filter); // (graph, EdgePredicate, VertexPredicate)
-
-
-	print_graph(filtered_graph);
-	return filtered_graph;
-}
+*/
 
 
 
+/*
 int find_connected_components(FilteredGraphType filtered_graph, std::vector<int> & component)
 {
-	/* Find all connected components of subgraph w/0 vertex separator */
+	/* Find all connected components of subgraph w/0 vertex separator 
 
 	int num = connected_components(filtered_graph, &component[0]);
 
 	return num;
-}
-int print_connected_components(int num, std::vector<int> & component)
+}*/
+
+/*int print_connected_components(int num, std::vector<int> & component)
 {
 	std::cout << "There are " << num << " connected components" << std::endl;
 
@@ -262,20 +281,18 @@ int print_connected_components(int num, std::vector<int> & component)
 
 
 	return 0;
-}
+}*/
 
-
-
-
-
+/*
 int create_vertex_separator(default_Graph &g, V a, V b, std::vector<vertex_descriptor> & vertex_separator){
 	std::vector<vertex_descriptor> predecessors(num_vertices(g)); // To store parents
 	std::vector<Weight> distances(num_vertices(g)); // To store distances
 
 	find_shortest_path(g, a, b, predecessors, distances, vertex_separator);
 	return 0;
-}
+}*/
 
+/*
 int separate_graph(default_Graph & g, V a, V b){
 
 
@@ -294,9 +311,9 @@ int separate_graph(default_Graph & g, V a, V b){
 
 	return 0;
 }
+*/
 
-
-int test_line_parameterization(default_Graph & g){
+/*int test_line_parameterization(default_Graph & g){
 
 
 
@@ -391,7 +408,10 @@ int test_line_parameterization(default_Graph & g){
 
 	return 0;
 }
-int dijkstra_with_graph(){
+
+*/
+
+/*int dijkstra_with_graph(){
 	char* filename = "../../surface/surface.off";
 	default_Graph g;
 	g = read_graph(filename);
@@ -438,7 +458,7 @@ int dijkstra_with_graph(){
 	std::cout << distanceMap[v] << std::endl << std::endl;
 
 	return 0;
-}
+}*/
 
 
 #endif

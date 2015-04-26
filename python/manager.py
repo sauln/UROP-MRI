@@ -53,10 +53,10 @@ def main():
     #Test.someTtestTesting()
     
     #experiments.someTtestTesting()
-    #EDMA.EDMA()
-    #experiments.edgeLengthMonteCarlo()
-    #experiments.compareLandmarksOverTime()
-    #experiments.genHistogramsOfData()
+    EDMA.EDMA()
+    experiments.edgeLengthMonteCarlo()
+    experiments.compareLandmarksOverTime()
+    experiments.genHistogramsOfData()
 
 
     

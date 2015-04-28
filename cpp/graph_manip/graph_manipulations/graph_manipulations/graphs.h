@@ -83,7 +83,7 @@ typedef iterator_property_map < vertex_descriptor_mesh*, IndexMap_mesh, vertex_d
 typedef iterator_property_map < Weight*, IndexMap_mesh, Weight, Weight& > 
 																	DistanceMap_mesh;
 
-
+//compare and combine used for the dijkstra's shortest path
 struct dist_combine{
 	double operator()(const double & a, const double &b) const {
 		return sqrt(b) + a;

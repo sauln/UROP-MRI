@@ -24,16 +24,13 @@
     <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="KGonBorderParameterizer2.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="KGonParameterizer2.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="graphs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="tools.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Square_border_parameterizer_3_corners.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

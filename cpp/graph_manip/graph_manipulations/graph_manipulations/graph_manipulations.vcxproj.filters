@@ -33,6 +33,12 @@
     <ClInclude Include="Square_border_parameterizer_3_corners.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Parameterization_polyhedron_adaptor_3_corners.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Polyhedron_3_corners.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

@@ -25,8 +25,8 @@
 //
 //
 
-#ifndef CGAL_SQUAREBORDERPARAMETERIZER_3_H
-#define CGAL_SQUAREBORDERPARAMETERIZER_3_H
+#ifndef CGAL_SQUAREBORDERPARAMETERIZER_3_H_CORNER
+#define CGAL_SQUAREBORDERPARAMETERIZER_3_H_CORNER
 
 #include <CGAL/surface_mesh_parameterization_assertions.h>
 #include <CGAL/Parameterizer_traits_3.h>
@@ -69,7 +69,7 @@ namespace CGAL {
 ///
 
 template<class ParameterizationMesh_3>      //< 3D surface
-class Square_border_parameterizer_3
+class Square_border_parameterizer_3_corner
 {
 // Public types
 public:
@@ -111,6 +111,8 @@ private:
     typedef typename Adaptor::Vertex_around_vertex_const_circulator
                                             Vertex_around_vertex_const_circulator;
 
+
+
 	typedef typename std::vector < Border_vertex_iterator >
 		corner_vec;
 
@@ -119,8 +121,12 @@ private:
 // Public operations
 public:
     /// Destructor of base class should be virtual.
-    virtual ~Square_border_parameterizer_3() {}
+    virtual ~Square_border_parameterizer_3_corner() {}
 
+
+	//std::vector<int> corners_id;
+
+	corner_vec actual_corners;
     // Default constructor, copy constructor and operator =() are fine
 
     /// Assign to mesh's border vertices a 2D position (i.e.\ a (u,v) pair)
@@ -164,7 +170,7 @@ private:
 		double &a, double &b, double &c, double &dis);
 
 
-	int find_corners(Adaptor &mesh, corner_vec & actual_corners);
+	int find_corners(Adaptor &mesh);
 	double side_length(Adaptor &mesh, Border_vertex_iterator &start, Border_vertex_iterator &end);
 	double distance(Adaptor &mesh, Border_vertex_iterator &v, double &a, double &b, double &c);
 	double distance(Adaptor &mesh, Border_vertex_iterator &v, Border_vertex_iterator &u);
@@ -175,7 +181,7 @@ private:
 // Compute the total length of the border.
 template<class Adaptor>
 inline
-double Square_border_parameterizer_3<Adaptor>::compute_border_length(
+double Square_border_parameterizer_3_corner<Adaptor>::compute_border_length(
                                                         const Adaptor& mesh)
 {
     double len = 0.0;
@@ -202,7 +208,7 @@ double Square_border_parameterizer_3<Adaptor>::compute_border_length(
 template<class Adaptor>
 inline
 typename double
-Square_border_parameterizer_3<Adaptor>::side_length(Adaptor &mesh, Border_vertex_iterator &start, Border_vertex_iterator &end){
+Square_border_parameterizer_3_corner<Adaptor>::side_length(Adaptor &mesh, Border_vertex_iterator &start, Border_vertex_iterator &end){
 	double leg_len = 0;
 	Border_vertex_iterator next, it;
 	for (it = start; it != end; it++){
@@ -220,27 +226,66 @@ Square_border_parameterizer_3<Adaptor>::side_length(Adaptor &mesh, Border_vertex
 template<class Adaptor>
 inline
 typename int
-Square_border_parameterizer_3<Adaptor>::find_corners(Adaptor &mesh, corner_vec & actual_corners){
+Square_border_parameterizer_3_corner<Adaptor>::find_corners(Adaptor &mesh){
+
+	for (Border_vertex_iterator it = mesh.mesh_main_border_vertices_begin(); it != mesh.mesh_main_border_vertices_end(); it++){
+		for (std::vector<int>::iterator ait = mesh.corners.begin(); ait != mesh.corners.end(); ++ait){
+			if (it->id() == (*ait)){
+				actual_corners.push_back(it);
+			}
+		}
+	}
+
+
+	//std::cout << "I want to make this function obsolete by sending the 4 corners as an attribute" 
+	//	<< " of the adaptor" << std::endl;
+	//std::cout << mesh.corners[0] << std::endl;
+	//std::cout << mesh.corners[1] << std::endl;
+	//std::cout << mesh.corners[2] << std::endl;
+	//std::cout << mesh.corners[3] << std::endl;
+	//std::cout << std::endl << "In Border:" << std::endl;
+	//for (vertex_iterator_m mit = mesh.mesh_vertices_begin(); mit != mesh.mesh_vertices_end(); ++mit){
+	//	std::cout << mit->id() << ", ";
+	//}
+
 
 	//get the corners from the file
-	std::ifstream infile("C:/Users/nathaniel/Documents/Development/UROP-MRI/cpp/graph_manip/surface/landmarks.txt");
-	std::vector<std::pair<Border_vertex_iterator, double>> corners;
-	double a, b, c, d;
-	double dis;
-	while (infile >> a >> b >> c >> d){
-		Border_vertex_iterator bbc = closest_iterator2(mesh, b, c, d, dis);
-		corners.push_back(std::make_pair(bbc, dis));
-	}
+	//std::ifstream infile("C:/Users/nathaniel/Documents/Development/UROP-MRI/cpp/graph_manip/surface/landmarks.txt");
+	//std::vector<std::pair<Border_vertex_iterator, double>> corners;
+	//double a, b, c, d;
+	//double dis;
+	//while (infile >> a >> b >> c >> d){
+	//	Border_vertex_iterator bbc = closest_iterator2(mesh, b, c, d, dis);
+	//	corners.push_back(std::make_pair(bbc, dis));
+	//}
 
 
 	//sort the corners by how close they are to the surface we're parameterizing
-	std::sort(corners.begin(), corners.end(), &Square_border_parameterizer_3<Adaptor>::corner_sort);
+	//std::sort(corners.begin(), corners.end(), &Square_border_parameterizer_3<Adaptor>::corner_sort);
 
 	//take the 4 closest corners
 	//corner_vec actual_corners;
-	for (Border_vertex_iterator it = mesh.mesh_main_border_vertices_begin(); it != mesh.mesh_main_border_vertices_end(); it++){
-		if (isin(corners, 4, it) && actual_corners.size() < 4){ actual_corners.push_back(it); }
-	}
+	//std::cout << "CHECK STARTING HERE: " << std::endl;;
+
+	//std::cout << "Corners found in our ugly way: ";
+	//for (Border_vertex_iterator it = mesh.mesh_main_border_vertices_begin(); it != mesh.mesh_main_border_vertices_end(); it++){
+	//	if (isin(corners, 4, it) && actual_corners.size() < 4){ actual_corners.push_back(it); std::cout << it->id() << ", "; }
+	//}
+	//std::cout << std::endl << "Sorted Corners:: ";
+	//std::vector<int> tmp_check;
+
+
+
+
+
+	//for (std::vector<int>::iterator ait = mesh.corners.begin(); ait != mesh.corners.end(); ++ait)
+	//	std::cout << *ait << ", ";
+
+	//std::cout << std::endl << std::endl;
+	//for (std::vector<int>::iterator ait = mesh.corners.begin(); ait != mesh.corners.end(); ++ait)
+
+
+
 
 	//std::cout << "outsource corners finding";
 	return 0;
@@ -252,19 +297,22 @@ Square_border_parameterizer_3<Adaptor>::find_corners(Adaptor &mesh, corner_vec &
 template<class Adaptor>
 inline
 typename Parameterizer_traits_3<Adaptor>::Error_code
-Square_border_parameterizer_3<Adaptor>::parameterize_border(Adaptor& mesh)
+Square_border_parameterizer_3_corner<Adaptor>::parameterize_border(Adaptor& mesh)
 {
 #ifdef DEBUG_TRACE
     std::cerr << "  map on a square" << std::endl;
 #endif
 
+
+
+	//std::cout << "Parameterize border with corners specified in landmarks.txt" << std::endl;
     // Nothing to do if no border
     if (mesh.mesh_main_border_vertices_begin() == mesh.mesh_main_border_vertices_end())
         return Parameterizer_traits_3<Adaptor>::ERROR_BORDER_TOO_SHORT;
 
 	// Find our corners
-	corner_vec actual_corners;
-	find_corners(mesh, actual_corners);
+	//corner_vec actual_corners;
+	find_corners(mesh);
 
 	//std::cout << "Print the four corners: ";
 	//for (std::vector<Border_vertex_iterator>::iterator bit = actual_corners.begin(); bit != actual_corners.end(); ++bit){
@@ -512,7 +560,7 @@ Square_border_parameterizer_3<Adaptor>::parameterize_border(Adaptor& mesh)
 template<class Adaptor>
 inline
 typename double
-Square_border_parameterizer_3<Adaptor>::distance(Adaptor& mesh, Border_vertex_iterator &it, double &a, double &b, double &c)
+Square_border_parameterizer_3_corner<Adaptor>::distance(Adaptor& mesh, Border_vertex_iterator &it, double &a, double &b, double &c)
 {
 	return sqrt(pow((mesh.get_vertex_position(it).x() - a), 2) +
 		pow((mesh.get_vertex_position(it).y() - b), 2) +
@@ -525,7 +573,7 @@ Square_border_parameterizer_3<Adaptor>::distance(Adaptor& mesh, Border_vertex_it
 template<class Adaptor>
 inline
 typename double
-Square_border_parameterizer_3<Adaptor>::distance(Adaptor& mesh, Border_vertex_iterator &v, Border_vertex_iterator &u)
+Square_border_parameterizer_3_corner<Adaptor>::distance(Adaptor& mesh, Border_vertex_iterator &v, Border_vertex_iterator &u)
 {
 	return sqrt(pow((mesh.get_vertex_position(v).x() - mesh.get_vertex_position(u).x()), 2) +
 		pow((mesh.get_vertex_position(v).y() - mesh.get_vertex_position(u).x()), 2) +
@@ -540,7 +588,7 @@ Square_border_parameterizer_3<Adaptor>::distance(Adaptor& mesh, Border_vertex_it
 template<class Adaptor>
 inline
 typename Adaptor::Border_vertex_iterator
-Square_border_parameterizer_3<Adaptor>::closest_iterator2(Adaptor& mesh,
+Square_border_parameterizer_3_corner<Adaptor>::closest_iterator2(Adaptor& mesh,
 				double &a, double &b, double &c, double &dis)
 {
 	Border_vertex_iterator best;
@@ -573,7 +621,7 @@ Square_border_parameterizer_3<Adaptor>::closest_iterator2(Adaptor& mesh,
 template<class Adaptor>
 inline
 typename Adaptor::Border_vertex_iterator
-Square_border_parameterizer_3<Adaptor>::closest_iterator(Adaptor& mesh,
+Square_border_parameterizer_3_corner<Adaptor>::closest_iterator(Adaptor& mesh,
                                                        const Offset_map& offset,
                                                        double value)
 {
@@ -616,8 +664,8 @@ Square_border_parameterizer_3<Adaptor>::closest_iterator(Adaptor& mesh,
 ///
 
 template<class ParameterizationMesh_3>      //< 3D surface
-class Square_border_uniform_parameterizer_3
-    : public Square_border_parameterizer_3<ParameterizationMesh_3>
+class Square_border_uniform_parameterizer_3_corner
+    : public Square_border_parameterizer_3_corner<ParameterizationMesh_3>
 {
 // Public types
 public:
@@ -696,8 +744,8 @@ protected:
 ///
 
 template<class ParameterizationMesh_3>      //< 3D surface
-class Square_border_arc_length_parameterizer_3
-    : public Square_border_parameterizer_3<ParameterizationMesh_3>
+class Square_border_arc_length_parameterizer_3_corner
+    : public Square_border_parameterizer_3_corner<ParameterizationMesh_3>
 {
 // Public types
 public:
@@ -763,4 +811,4 @@ protected:
 
 } //namespace CGAL
 
-#endif //CGAL_SQUAREBORDERPARAMETERIZER_3_H
+#endif //CGAL_SQUAREBORDERPARAMETERIZER_3_H_CORNER

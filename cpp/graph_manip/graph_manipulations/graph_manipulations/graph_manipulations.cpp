@@ -70,7 +70,8 @@
 //#include "Polyhedron_ex.h"
 //#include "Mesh_cutter.h"
 //#include "Parameterization_polyhedron_adaptor_ex.h"
-
+//#include "Polyhedron_3_corners.h"
+#include "Parameterization_polyhedron_adaptor_3_corners.h"
 #include "Square_border_parameterizer_3_corners.h"
 #include "graphs.h"
 #include "tools.h"
@@ -83,8 +84,19 @@ using namespace boost;
 
 // read the mesh from our file 
 int read_mesh(char* filename, Polyhedron & mesh);
-Parameterization_polyhedron_adaptor parameterize_mesh(Polyhedron & mesh);
 int print_mesh(const Polyhedron & mesh, const Parameterization_polyhedron_adaptor & mesh_adaptor);
+
+int dijkstra_create_separator(Polyhedron &mesh,
+std::set<vertex_descriptor_mesh> &vertex_separator,
+std::vector<vertex_descriptor_mesh>& vert_descript,
+std::vector<E> &edges);
+
+int label_components(const Polyhedron & mesh,
+	const std::set<vertex_descriptor_mesh> & vertex_separator,
+	std::map<vertex_descriptor_mesh, int> &component,
+	std::set<int> &values);
+
+Polyhedron partial_mesh_builder(Polyhedron &mesh, std::map<vertex_descriptor_mesh, int> &component_map, int k);
 
 
 
@@ -95,23 +107,296 @@ struct Frame{
 	std::vector<E> edges;
 };
 
-
+int read_mesh(char* filename, Polyhedron &mesh);
 
 class meshes{
-	public:
-		meshes(char *f1, char *f2);
-		int create_frame(char *filename);
-		int split_and_parameterize_mesh();
-		int test_meshes();
+public:
+	//meshes();
+	meshes(char *f1, char *f2);
+	int create_frame(char *filename);
+	int split_and_parameterize_mesh();
+	int test_corners();
+	int find_corners();
+	int set_4_corners(Polyhedron & o);
+	//int read_mesh(char* filename);
 
-		Frame												frame;
-		Polyhedron											mesh;
-		std::vector<vertex_descriptor_mesh>					corners;
-		std::vector<Polyhedron>								original_meshes;
-		std::vector<Parameterization_polyhedron_adaptor>	parametized_meshes;
+	Parameterization_polyhedron_adaptor parameterize_mesh(Polyhedron &m);
+
+
+	Frame												frame;
+	Polyhedron											mesh;
+
+	///
+	//std::vector<cuts>  mesh_cuts;
+
+	std::vector<vertex_descriptor_mesh>					corners;
+	std::vector<Polyhedron>								original_meshes;
+	std::vector<Parameterization_polyhedron_adaptor>	parameterized_meshes;
 };
 
+int meshes::find_corners(){
+	//find our vertices that are closest to the frame.
+	for (std::vector<Point>::iterator pit = frame.points.begin(); pit != frame.points.end(); ++pit){
+		//std::cout << "finding closest point to (" << (*pit).x() << ", " << (*pit).y() << ", " << (*pit).x() << ")" << std::endl;
+		naive_closest_vertex(mesh, (*pit), corners);
+	}
+	return 0;
+}
 
+int meshes::split_and_parameterize_mesh(){
+	//std::vector<Point> &points, std::vector<E> &edges,
+
+	vertex_iterator_mesh						vit, ve;
+	vertex_descriptor_mesh						st, en, it;
+
+	std::set<vertex_descriptor_mesh>			vertex_separator;
+	std::map<vertex_descriptor_mesh, int>		component_map;
+	std::set<int>								values;
+
+	//create vertex separator
+	dijkstra_create_separator(mesh, vertex_separator, corners, frame.edges);
+
+
+	// create a component map that labels each vertex by which component it is in, -1 if in the vertex separator
+	label_components(mesh, vertex_separator, component_map, values);
+
+
+
+	for (std::set<int>::iterator val_it = values.begin(); val_it != values.end(); ++val_it){
+
+		//create new meshes from the connected components
+		Polyhedron o = partial_mesh_builder(mesh, component_map, (*val_it));
+		if (o.is_valid()){
+
+			//parameterize each mesh
+			original_meshes.push_back(o);
+			set_4_corners(o);
+
+			parameterized_meshes.push_back(parameterize_mesh(o));
+
+		}
+
+	}
+
+	return 0;
+}
+
+int meshes::set_4_corners(Polyhedron & o){
+	//This function traverses the new mesh and finds the id of the corners 
+	for (vertex_iterator_m it = o.vertices_begin(); it != o.vertices_end(); ++it){
+		for (std::vector<vertex_descriptor_mesh>::iterator vit = corners.begin();
+			vit != corners.end(); ++vit){
+			if ((*it).point() == (*vit)->point()){
+				o.corners.push_back((*it).id());
+			}
+		}
+	}
+
+	if (o.corners.size() != 4){ std::cout << "THERE ARE NOT FOR CORNERS ON OUR SQUARE MESH!!" << std::endl; }
+	return 0;
+}
+
+int meshes::create_frame(char* filename){
+	//this will simulate the act of reading the landmarks from a graph
+	//take a filename, return a list of landmarks
+	//std::vector<Point> &points, std::vector<E> &edges
+
+
+	//				/--a
+	//			d--/   |   b
+	//			|	c  |   |
+	//			|   |  |   |
+	//			|	|  e   |
+	//			h	|	   f
+	//				g
+
+	// figure out how to read this in from a file
+	std::cout << "Creating frame" << std::endl;
+
+	double a, b, c, d;
+	std::ifstream infile(filename);
+
+	while (infile >> a >> b >> c >> d){
+		//std::cout << a << b << c << d << std::endl;
+		frame.points.push_back(Point(b, c, d));
+	}
+
+	frame.edges.push_back(E(0, 1));
+	frame.edges.push_back(E(1, 2));
+	frame.edges.push_back(E(2, 3));
+	frame.edges.push_back(E(3, 0));
+	frame.edges.push_back(E(4, 5));
+	frame.edges.push_back(E(5, 6));
+	frame.edges.push_back(E(6, 7));
+	frame.edges.push_back(E(7, 4));
+	frame.edges.push_back(E(0, 4));
+	frame.edges.push_back(E(1, 5));
+	frame.edges.push_back(E(2, 6));
+	frame.edges.push_back(E(3, 7));
+
+
+
+
+	return 0;
+}
+
+meshes::meshes(char* f1, char* f2)
+{
+
+	create_frame(f2);
+	read_mesh(f1, mesh);
+	find_corners();
+	split_and_parameterize_mesh();
+
+}
+
+int meshes::test_corners(){
+	//I need to figure out some way to test if the parameterizations are correct...
+
+	std::cout << "Do the meshes work? and if so, how do they work?" << std::endl;
+	vertex_iterator_param vit;
+
+	std::cout << "Each corner should be one of 3 faces" << std::endl;
+
+
+	std::cout << original_meshes[0].vertices_begin()->point() << std::endl
+		<< original_meshes[1].vertices_begin()->point() << std::endl
+		<< original_meshes[2].vertices_begin()->point() << std::endl
+		<< original_meshes[3].vertices_begin()->point() << std::endl
+		<< original_meshes[4].vertices_begin()->point() << std::endl
+		<< original_meshes[5].vertices_begin()->point() << std::endl;
+
+
+
+
+
+
+	return 0;
+
+
+}
+
+
+//Parameterize the map and return the mesh adaptor
+Parameterization_polyhedron_adaptor meshes::parameterize_mesh(Polyhedron & m){
+	//std::cout << "parameterize mesh and return parameterization" << std::endl;
+	// Create Polyhedron adaptor mesh
+	// Assume mesh is a topological disk
+	//std::cout << "Four corners of original mesh indexed: ";
+	//std::cout << m.corners[0] << ", " << m.corners[1] << ", " << m.corners[2] << ", " << m.corners[3] << std::endl;;
+	
+
+	
+	
+	Parameterization_polyhedron_adaptor mesh_adaptor(m);
+
+	//for (vertex_iterator_m mit = mesh_adaptor.mesh_vertices_begin(); mit != mesh_adaptor.mesh_vertices_end(); ++mit){
+	//	std::cout << mit->id() << ", ";
+	//}
+	//std::cout << std::endl;
+	for (std::vector<int>::iterator ait = m.corners.begin(); ait != m.corners.end(); ++ait){
+		mesh_adaptor.corners.push_back(*ait);
+	}
+	
+
+	//for each vertex in our original mesh
+	//for (vertex_iterator_m vit = m.vertices_begin(); vit != m.vertices_end(); ++vit){
+		//and for each corner of this original mesh
+
+		//std::cout << vit->id() << std::endl;
+	//	for (std::vector<int>::iterator it = m.corners.begin(); it != m.corners.end(); ++it){
+			//if this vertex is one of the corners (check by id)
+	//		if (vit->id() == m.corners[0]){
+				//then for each vertex in the adaptor
+				//std::cout << "found corner" << std::endl;
+	//			for (vertex_iterator_m mit = mesh_adaptor.mesh_vertices_begin(); mit != mesh_adaptor.mesh_vertices_end(); ++mit){
+					//if the vertex in our original mesh and the vertex in the adaptor are the same point
+	//				if (mit->point() == vit->point()){
+						//then this vertex in our adaptor must be a corner!
+	//					mesh_adaptor.corners.push_back(mit->id());
+					//}}}}}
+
+
+	if (mesh_adaptor.corners.size() != 4){
+		std::cout << "DIFFERENT THAN 4 CORNERS SHOWED UP!: " <<mesh_adaptor.corners.size() << std::endl;
+	}
+
+
+
+	//std::cout << std::endl;
+	//std::cout << "New mesh vertex #" << m.corners[0] << std::endl;
+	//std::cout << "Total vertex count: " << mesh_adaptor.count_mesh_vertices() << std::endl;
+	//std::cout << "Mesh corners: ";
+	//for (std::vector<int>::iterator ait = mesh_adaptor.corners.begin(); ait != mesh_adaptor.corners.end(); ++ait)
+	//	std::cout << *ait << ", ";
+
+	//std::cout << std::endl;
+	//mesh_adaptor.corners_id.push_back(3);
+
+
+	// we need to set the corners
+
+	// Parameterize our mesh according to Parameterizer specs
+	Parameterizer::Error_code err = CGAL::parameterize(mesh_adaptor, Parameterizer());
+
+
+	// Check to make sure it worked just find -- this is the standard checker
+	switch (err) {
+	case Parameterizer::OK: // Success
+		break;
+	case Parameterizer::ERROR_EMPTY_MESH: // Input mesh not supported
+	case Parameterizer::ERROR_NON_TRIANGULAR_MESH:
+	case Parameterizer::ERROR_NO_TOPOLOGICAL_DISC:
+	case Parameterizer::ERROR_BORDER_TOO_SHORT:
+		std::cerr << "Input mesh not supported: " << Parameterizer::get_error_message(err) << std::endl;
+		//return EXIT_FAILURE;
+		break;
+	default: // Error
+		std::cerr << "Error: " << Parameterizer::get_error_message(err) << std::endl;
+		//return EXIT_FAILURE;
+		break;
+	};
+
+	return mesh_adaptor;
+}
+
+
+
+
+
+
+
+
+
+
+//Read in a mesh from a file.
+int read_mesh(char* filename, Polyhedron &mesh){
+
+	std::ifstream stream(filename);
+
+	//***************************************
+	// Read the mesh as a polyhedron
+	//***************************************
+
+	std::cout << "Read in file" << std::endl;
+
+	stream >> mesh;
+	if (!stream || !mesh.is_valid() || mesh.empty())
+	{
+		std::cerr << "Error: cannot read OFF file " << filename << std::endl;
+		return EXIT_FAILURE;
+	}
+
+	//associate indices to each vertex
+
+	vertex_iterator_mesh vit, ve;
+	int index = 0;
+	for (boost::tie(vit, ve) = boost::vertices(mesh); vit != ve; ++vit){
+		(*vit)->id() = index++;
+	}
+
+	return 0;
+}
 
 
 Polyhedron partial_mesh_builder(Polyhedron &mesh, std::map<vertex_descriptor_mesh, int> &component_map, int k);
@@ -141,20 +426,12 @@ int label_deeper(const Polyhedron & mesh,
 	std::map<vertex_descriptor_mesh, int>& component,
 	int & component_number, vertex_descriptor_mesh vit);
 
-int label_components(const Polyhedron & mesh,
-	const std::set<vertex_descriptor_mesh> & vertex_separator,
-	std::map<vertex_descriptor_mesh, int> &component,
-	std::set<int> &values);
-
-int dijkstra_create_separator(Polyhedron &mesh,
-	std::set<vertex_descriptor_mesh> &vertex_separator,
-	std::vector<vertex_descriptor_mesh>& vert_descript,
-	std::vector<E> &edges);
 
 
 
-Parameterization_polyhedron_adaptor parameterize_mesh(Polyhedron & mesh);
-Polyhedron partial_mesh_builder(Polyhedron &mesh, std::map<vertex_descriptor_mesh, int> &component_map, int k);
+
+
+
 
 int test_real_images();
 
@@ -238,69 +515,6 @@ static bool write_file_eps(const Parameterization_polyhedron_adaptor& mesh_adapt
 }
 
 
-//Read in a mesh from a file.
-int read_mesh(char* filename, Polyhedron & mesh){
-
-	std::ifstream stream(filename);
-
-	//***************************************
-	// Read the mesh as a polyhedron
-	//***************************************
-
-	std::cout << "Read in file" << std::endl;
-
-	stream >> mesh;
-	if (!stream || !mesh.is_valid() || mesh.empty())
-	{
-		std::cerr << "Error: cannot read OFF file " << filename << std::endl;
-		return EXIT_FAILURE;
-	}
-
-	//associate indices to each vertex
-
-	vertex_iterator_mesh vit, ve;
-	int index = 0;
-	for (boost::tie(vit, ve) = boost::vertices(mesh); vit != ve; ++vit){
-		(*vit)->id() = index++;
-	}
-
-	return 0;
-}
-
-//Parameterize the map and return the mesh adaptor
-Parameterization_polyhedron_adaptor parameterize_mesh(Polyhedron & mesh){
-	std::cout << "parameterize mesh and return parameterization" << std::endl;
-	// Create Polyhedron adaptor mesh
-	// Assume mesh is a topological disk
-	Parameterization_polyhedron_adaptor mesh_adaptor(mesh);
-
-
-
-	// we need to set the corners
-
-	// Parameterize our mesh according to Parameterizer specs
-	Parameterizer::Error_code err = CGAL::parameterize(mesh_adaptor, Parameterizer());
-
-
-	// Check to make sure it worked just find -- this is the standard checker
-	switch (err) {
-	case Parameterizer::OK: // Success
-		break;
-	case Parameterizer::ERROR_EMPTY_MESH: // Input mesh not supported
-	case Parameterizer::ERROR_NON_TRIANGULAR_MESH:
-	case Parameterizer::ERROR_NO_TOPOLOGICAL_DISC:
-	case Parameterizer::ERROR_BORDER_TOO_SHORT:
-		std::cerr << "Input mesh not supported: " << Parameterizer::get_error_message(err) << std::endl;
-		//return EXIT_FAILURE;
-		break;
-	default: // Error
-		std::cerr << "Error: " << Parameterizer::get_error_message(err) << std::endl;
-		//return EXIT_FAILURE;
-		break;
-	};
-
-	return mesh_adaptor;
-}
 
 
 //Save the mesh as .off and .eps (i think the .off is not printing quite right.
@@ -337,7 +551,7 @@ int save_parameterized_meshes(meshes mesh_set){
 
 	char buffer[64]; // The filename buffer.
 	int index_f = 0;
-	for (std::vector<Parameterization_polyhedron_adaptor>::iterator ad_it = mesh_set.parametized_meshes.begin(); ad_it != mesh_set.parametized_meshes.end(); ++ad_it){
+	for (std::vector<Parameterization_polyhedron_adaptor>::iterator ad_it = mesh_set.parameterized_meshes.begin(); ad_it != mesh_set.parameterized_meshes.end(); ++ad_it){
 		// Put "file" then k then ".txt" in to filename.
 		sprintf(buffer, "../../surface/output_surfaces/file%i.eps", index_f);
 		++index_f;
@@ -461,62 +675,6 @@ int label_components(	const Polyhedron & mesh,
 	return 0;
 }
 
-int meshes::create_frame(char* filename){
-	//this will simulate the act of reading the landmarks from a graph
-	//take a filename, return a list of landmarks
-	//std::vector<Point> &points, std::vector<E> &edges
-	
-
-	//				/--a
-	//			d--/   |   b
-	//			|	c  |   |
-	//			|   |  |   |
-	//			|	|  e   |
-	//			h	|	   f
-	//				g
-
-	// figure out how to read this in from a file
-	std::cout << "Creating frame" << std::endl;
-
-	double a, b, c, d;
-	std::ifstream infile(filename);
-
-	while (infile >> a >> b >> c >> d){
-		//std::cout << a << b << c << d << std::endl;
-		frame.points.push_back(Point(b, c, d));
-	}
-	//for (std::vector<Point>::iterator it = frame.points.begin(); it != frame.points.end(); ++it){
-	//	std::cout << it->x() << ", " << it->y() << ", " << it->z() << std::endl;
-	//}
-	
-
-	//frame.points.push_back(Point(5, 5, 5));
-	//frame.points.push_back(Point(-5, 5, 5));
-	///frame.points.push_back(Point(-5, -5, 5));
-	//frame.points.push_back(Point(5, -5, 5));
-	//frame.points.push_back(Point(5, 5, -5));
-	//frame.points.push_back(Point(-5, 5, -5));
-	///frame.points.push_back(Point(-5, -5, -5));
-	//frame.points.push_back(Point(5, -5, -5));
-
-	frame.edges.push_back(E(0, 1));
-	frame.edges.push_back(E(1, 2));
-	frame.edges.push_back(E(2, 3));
-	frame.edges.push_back(E(3, 0));
-	frame.edges.push_back(E(4, 5));
-	frame.edges.push_back(E(5, 6));
-	frame.edges.push_back(E(6, 7));
-	frame.edges.push_back(E(7, 4));
-	frame.edges.push_back(E(0, 4));
-	frame.edges.push_back(E(1, 5));
-	frame.edges.push_back(E(2, 6));
-	frame.edges.push_back(E(3, 7));
-	
-
-
-
-	return 0;
-}
 
 int dijkstra_create_separator(Polyhedron &mesh, 
 	std::set<vertex_descriptor_mesh> &vertex_separator, 
@@ -568,62 +726,6 @@ int dijkstra_create_separator(Polyhedron &mesh,
 } // dijkstra_create_separator
 
 
-int meshes::split_and_parameterize_mesh(){
-	//std::vector<Point> &points, std::vector<E> &edges,
-	
-	vertex_iterator_mesh						vit, ve;
-	vertex_descriptor_mesh						st, en, it;
-	
-	std::set<vertex_descriptor_mesh>			vertex_separator;
-	std::map<vertex_descriptor_mesh, int>		component_map;
-	std::set<int>								values;
-
-
-	for (std::vector<Point>::iterator pit = frame.points.begin(); pit != frame.points.end(); ++pit){
-		//std::cout << "finding closest point to (" << (*pit).x() << ", " << (*pit).y() << ", " << (*pit).x() << ")" << std::endl;
-		naive_closest_vertex(mesh, (*pit), corners);
-	}
-
-
-	//std::cout << "The corners are: " << std::endl;
-	//for (std::vector<vertex_descriptor_mesh>::iterator pit = corners.begin(); pit != corners.end(); ++pit){
-	//	std::cout << (*pit)->id() << "->";
-	//}
-	//std::cout << std::endl << std::endl;
-	
-	//create vertex separator
-	dijkstra_create_separator(mesh, vertex_separator, corners, frame.edges);
-	
-	//print it
-	//for (std::set<vertex_descriptor_mesh>::iterator tit = vertex_separator.begin(); tit != vertex_separator.end(); ++tit){
-	//	std::cout << (*tit)->id() << "->";
-	//}
-	//std::cout << std::endl;
-
-	// create a component map that labels each vertex by which component it is in, -1 if in the vertex separator
-
-	label_components(mesh, vertex_separator, component_map, values);
-
-	//create new meshes from the connected components
-	for (std::set<int>::iterator val_it = values.begin(); val_it != values.end(); ++val_it){
-		original_meshes.push_back(partial_mesh_builder(mesh, component_map, (*val_it)));
-	}
-
-
-	//parameterize each new mesh
-	for (std::vector<Polyhedron>::iterator p_it = original_meshes.begin(); p_it != original_meshes.end(); ++p_it){
-		if (!(*p_it).is_valid()){
-			std::cout << "cutting the mesh into pieces did not work" << std::endl;
-		}else{
-			parametized_meshes.push_back(parameterize_mesh(*p_it));
-		}
-	}
-
-	return 0;
-}
-
-
-
 
 
 Polyhedron partial_mesh_builder(Polyhedron &mesh, std::map<vertex_descriptor_mesh, int> &component_map, int k){
@@ -634,7 +736,7 @@ Polyhedron partial_mesh_builder(Polyhedron &mesh, std::map<vertex_descriptor_mes
 
 
 
-	std::cout << "begin mesh builder" << std::endl;
+	std::cout << "create new mesh for face " << k  << std::endl;
 	std::map<int, int> relative_index_map;
 	std::set<int> keys;
 	Polyhedron new_mesh;
@@ -705,32 +807,6 @@ int test_real_images(){
 }
 
 
-meshes::meshes(char* f1, char* f2)
-{
-	
-	create_frame(f2);
-	read_mesh(f1, mesh);
-	split_and_parameterize_mesh();
-
-}
-
-int meshes::test_meshes(){
-	//I need to figure out some way to test if the parameterizations are correct...
-
-	std::cout << "Do the meshes work? and if so, how do they work?" << std::endl;
-
-
-	//maybe we can correlate them by the x,y,z axis?
-
-	//parametized_meshes[0].
-
-
-
-
-	return 0;
-
-
-}
 
 int main(int argc, char* argv[])
 {
@@ -738,7 +814,7 @@ int main(int argc, char* argv[])
 	char* f2 = "../../surface/landmarks.txt";
 
 	meshes mesh_set(f1, f2);
-	mesh_set.test_meshes();
+	mesh_set.test_corners();
 
 	
 	std::cout << "finish parametrization" << std::endl;

@@ -47,6 +47,7 @@ typedef Polyhedron::Halfedge_handle edge_descriptor_mesh;
 //typedef boost::graph_traits<Polyhedron>::edge_iterator edge_iterator_mesh;
 typedef Polyhedron::Edge_iterator									edge_iterator_mesh;
 typedef Polyhedron::Facet_iterator									facet_iterator_mesh;
+
 typedef Polyhedron::Facet_handle									facet_descriptor_mesh;
 typedef Polyhedron::Halfedge_handle									halfedge_handle_mesh;
 typedef Polyhedron::Point_3											point_mesh;
@@ -54,7 +55,7 @@ typedef Polyhedron::HalfedgeDS										HalfedgeDS;
 typedef HalfedgeDS::Vertex											Vertex;
 typedef Vertex::Point												Point3;
 
-
+typedef Polyhedron::Vertex_iterator									vertex_iterator_m;
 typedef HalfedgeDS::Vertex_handle									v_handle;
 typedef HalfedgeDS::Vertex_handle									vertex_descriptor_mesh;
 //typedef Polyhedron::Vertex_iterator vertex_iterator_mesh;
@@ -63,8 +64,8 @@ typedef CGAL::Out_edge_iterator < Polyhedron >						edge_it_mesh;
 
 // Floater Mean Value Coordinates parameterization with square border
 // Parameterization Mesh
-typedef CGAL::Parameterization_polyhedron_adaptor_3<Polyhedron>		Parameterization_polyhedron_adaptor;
-typedef CGAL::Square_border_arc_length_parameterizer_3<Parameterization_polyhedron_adaptor>  
+typedef CGAL::Parameterization_polyhedron_adaptor_3_corners<Polyhedron>		Parameterization_polyhedron_adaptor;
+typedef CGAL::Square_border_arc_length_parameterizer_3_corner<Parameterization_polyhedron_adaptor>  
 																	Border_parameterizer;
 typedef CGAL::Eigen_solver_traits<>									Solver;
 
@@ -72,7 +73,7 @@ typedef CGAL::Eigen_solver_traits<>									Solver;
 typedef CGAL::Mean_value_coordinates_parameterizer_3<Parameterization_polyhedron_adaptor, Border_parameterizer, Solver> 
 																	Parameterizer;
 
-
+typedef Parameterization_polyhedron_adaptor::Vertex_iterator		vertex_iterator_param;
 
 
 

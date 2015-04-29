@@ -85,6 +85,8 @@ int naive_closest_vertex(Polyhedron & g, const Point & p, std::vector<vertex_des
 
 	return closest_id;
 }
+
+
 FilteredMeshType filter_out_separator(Polyhedron & mesh, std::vector<vertex_descriptor_mesh> &vertex_separator){
 	/* Create a filtered graph of original graph without the vertex separator */
 

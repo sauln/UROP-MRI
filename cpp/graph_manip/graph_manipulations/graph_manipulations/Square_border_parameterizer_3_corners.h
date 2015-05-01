@@ -228,6 +228,7 @@ inline
 typename int
 Square_border_parameterizer_3_corner<Adaptor>::find_corners(Adaptor &mesh){
 
+	//take the indices and find the actual corners
 	for (Border_vertex_iterator it = mesh.mesh_main_border_vertices_begin(); it != mesh.mesh_main_border_vertices_end(); it++){
 		for (std::vector<int>::iterator ait = mesh.corners.begin(); ait != mesh.corners.end(); ++ait){
 			if (it->id() == (*ait)){
@@ -247,8 +248,6 @@ Square_border_parameterizer_3_corner<Adaptor>::find_corners(Adaptor &mesh){
 	//for (vertex_iterator_m mit = mesh.mesh_vertices_begin(); mit != mesh.mesh_vertices_end(); ++mit){
 	//	std::cout << mit->id() << ", ";
 	//}
-
-
 	//get the corners from the file
 	//std::ifstream infile("C:/Users/nathaniel/Documents/Development/UROP-MRI/cpp/graph_manip/surface/landmarks.txt");
 	//std::vector<std::pair<Border_vertex_iterator, double>> corners;
@@ -258,35 +257,21 @@ Square_border_parameterizer_3_corner<Adaptor>::find_corners(Adaptor &mesh){
 	//	Border_vertex_iterator bbc = closest_iterator2(mesh, b, c, d, dis);
 	//	corners.push_back(std::make_pair(bbc, dis));
 	//}
-
-
 	//sort the corners by how close they are to the surface we're parameterizing
 	//std::sort(corners.begin(), corners.end(), &Square_border_parameterizer_3<Adaptor>::corner_sort);
-
 	//take the 4 closest corners
 	//corner_vec actual_corners;
 	//std::cout << "CHECK STARTING HERE: " << std::endl;;
-
 	//std::cout << "Corners found in our ugly way: ";
 	//for (Border_vertex_iterator it = mesh.mesh_main_border_vertices_begin(); it != mesh.mesh_main_border_vertices_end(); it++){
 	//	if (isin(corners, 4, it) && actual_corners.size() < 4){ actual_corners.push_back(it); std::cout << it->id() << ", "; }
 	//}
 	//std::cout << std::endl << "Sorted Corners:: ";
 	//std::vector<int> tmp_check;
-
-
-
-
-
 	//for (std::vector<int>::iterator ait = mesh.corners.begin(); ait != mesh.corners.end(); ++ait)
 	//	std::cout << *ait << ", ";
-
 	//std::cout << std::endl << std::endl;
 	//for (std::vector<int>::iterator ait = mesh.corners.begin(); ait != mesh.corners.end(); ++ait)
-
-
-
-
 	//std::cout << "outsource corners finding";
 	return 0;
 }

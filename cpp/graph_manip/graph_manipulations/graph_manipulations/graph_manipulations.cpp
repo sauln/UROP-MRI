@@ -120,9 +120,13 @@ public:
 	int set_4_corners(Polyhedron & o);
 	//int read_mesh(char* filename);
 
-	Parameterization_polyhedron_adaptor parameterize_mesh(Polyhedron &m);
 
 
+
+
+	//Parameterization_polyhedron_adaptor parameterize_mesh(Polyhedron &m);
+	//int parameterize_mesh(Polyhedron & m, Parameterization_polyhedron_adaptor &mesh_adaptor);
+	Parameterization_polyhedron_adaptor parameterize_mesh(Polyhedron & m);
 	Frame												frame;
 	Polyhedron											mesh;
 
@@ -132,6 +136,18 @@ public:
 	std::vector<vertex_descriptor_mesh>					corners;
 	std::vector<Polyhedron>								original_meshes;
 	std::vector<Parameterization_polyhedron_adaptor>	parameterized_meshes;
+
+
+	//Parameterization_polyhedron_adaptor param_meshes[6];
+	Polyhedron orig_meshes[6];
+
+	struct mesh_pair{
+		Polyhedron *m_orig;
+		Parameterization_polyhedron_adaptor  *m_param;
+	};
+	std::vector<mesh_pair> mesh_pairs;
+
+
 };
 
 int meshes::find_corners(){
@@ -161,22 +177,93 @@ int meshes::split_and_parameterize_mesh(){
 	label_components(mesh, vertex_separator, component_map, values);
 
 
-
+	std::vector<Polyhedron> original_m_tmp;
 	for (std::set<int>::iterator val_it = values.begin(); val_it != values.end(); ++val_it){
 
 		//create new meshes from the connected components
-		Polyhedron o = partial_mesh_builder(mesh, component_map, (*val_it));
-		if (o.is_valid()){
+		original_meshes.push_back(partial_mesh_builder(mesh, component_map, (*val_it)) );
 
-			//parameterize each mesh
-			original_meshes.push_back(o);
-			set_4_corners(o);
+		//Pointer to the mesh
+		//Polyhedron& o_tmp = original_meshes.back();
+		set_4_corners(original_meshes.back());
+		//mesh_pair tmp_pair;
+		if (original_meshes.back().is_valid()){
 
-			parameterized_meshes.push_back(parameterize_mesh(o));
+			
+			//mesh_adaptor is built off a mesh
+			//we need the mesh to persist in the same place
+			 // new Parameterization_polyhedron_adaptor(original_meshes.back());
 
+
+			//TODO start here
+			//These still aren't copying
+
+
+
+
+			//only the most recent mesh_adaptor exists?!
+			//Parameterization_polyhedron_adaptor mesh_adaptor = ;
+			parameterized_meshes.push_back(parameterize_mesh(original_meshes.back()));
+			
+		}
+
+		std::cout << "But the data cannot be accessed on the outside?  Why is the mesh not coming through?" << std::endl;
+		std::cout << "Size of our mesh_pairs:" << mesh_pairs.size() << std::endl;
+
+
+		///Issues:
+		//  Parameterization_polyhedron_adaptor has no default constructor
+		//  how do I get it out of the parameterize_mesh where it is initiated?
+
+
+
+
+		//errors occur when we try to access the mesh_adaptor->halfedge()
+
+		//Parameterization_polyhedron_adaptor *p_mesh = mesh_pairs[0].m_param;//mesh_pairs[0]->m_param;
+		//Polyhedron *p_orig = mesh_pairs[0].m_orig;
+		std::cout << "Try the most recent one" << std::endl;
+		// Raw output: dump (u,v) pairs
+		Polyhedron::Vertex_const_iterator pVertex;
+		for (pVertex = original_meshes.back().vertices_begin();
+			pVertex != original_meshes.back().vertices_end();
+			pVertex++)
+		{
+			//double u, v;
+			//u = 0.0; v = 1.0;
+			// (u,v) pair is stored in any halfedge
+			//parameterized_meshes[0].info(pVertex->halfedge())->uv().x();
+			double u = parameterized_meshes.back().info(pVertex->halfedge())->uv().x();
+			double v = parameterized_meshes.back().info(pVertex->halfedge())->uv().y();
+			//std::cout << "(u,v) = (" << u << "," << v << ")" << std::endl;
+		}
+
+
+		std::cout << "Try the first one" << std::endl;
+		// Raw output: dump (u,v) pairs
+		std::cout << "Only the most recent one works" << std::endl;
+		for (pVertex = original_meshes.front().vertices_begin();
+			pVertex != original_meshes.front().vertices_end();
+			pVertex++)
+		{
+			//double u, v;
+			//u = 0.0; v = 1.0;
+			// (u,v) pair is stored in any halfedge
+			std::cout << pVertex->halfedge()->vertex()->point() << std::endl;
+			//parameterized_meshes[0].info(pVertex->halfedge())->uv().x();
+			double u = parameterized_meshes.front().info(pVertex->halfedge())->uv().x();
+			double v = parameterized_meshes.front().info(pVertex->halfedge())->uv().y();
+			//std::cout << "(u,v) = (" << u << "," << v << ")" << std::endl;
 		}
 
 	}
+
+
+
+
+
+
+
 
 	return 0;
 }
@@ -242,7 +329,6 @@ int meshes::create_frame(char* filename){
 
 meshes::meshes(char* f1, char* f2)
 {
-
 	create_frame(f2);
 	read_mesh(f1, mesh);
 	find_corners();
@@ -267,7 +353,18 @@ int meshes::test_corners(){
 		<< original_meshes[5].vertices_begin()->point() << std::endl;
 
 
-
+	// Raw output: dump (u,v) pairs
+	Polyhedron::Vertex_const_iterator pVertex;
+	for (pVertex = original_meshes[0].vertices_begin();
+		pVertex != original_meshes[0].vertices_end();
+		pVertex++)
+	{
+		// (u,v) pair is stored in any halfedge
+		//parameterized_meshes[0].info(pVertex->halfedge())->uv().x();
+		double u = parameterized_meshes[0].info(pVertex->halfedge())->uv().x();
+		double v = parameterized_meshes[0].info(pVertex->halfedge())->uv().y();
+		std::cout << "(u,v) = (" << u << "," << v << ")" << std::endl;
+	}
 
 
 
@@ -278,31 +375,27 @@ int meshes::test_corners(){
 
 
 //Parameterize the map and return the mesh adaptor
-Parameterization_polyhedron_adaptor meshes::parameterize_mesh(Polyhedron & m){
+Parameterization_polyhedron_adaptor meshes::parameterize_mesh(Polyhedron & m ){
 	//std::cout << "parameterize mesh and return parameterization" << std::endl;
 	// Create Polyhedron adaptor mesh
 	// Assume mesh is a topological disk
-	//std::cout << "Four corners of original mesh indexed: ";
-	//std::cout << m.corners[0] << ", " << m.corners[1] << ", " << m.corners[2] << ", " << m.corners[3] << std::endl;;
 	
-
-	
-	
+	//int* foo = new int[10];
 	Parameterization_polyhedron_adaptor mesh_adaptor(m);
+	//Parameterization_polyhedron_adaptor mesh_adaptor(m);
 
-	//for (vertex_iterator_m mit = mesh_adaptor.mesh_vertices_begin(); mit != mesh_adaptor.mesh_vertices_end(); ++mit){
-	//	std::cout << mit->id() << ", ";
-	//}
-	//std::cout << std::endl;
-	for (std::vector<int>::iterator ait = m.corners.begin(); ait != m.corners.end(); ++ait){
+	//add the 4 corners to this structure
+	for (std::vector<int>::iterator ait = m.corners.begin(); ait != m.corners.end(); ++ait)
 		mesh_adaptor.corners.push_back(*ait);
-	}
 	
+	if (mesh_adaptor.corners.size() != 4)
+		std::cout << "DIFFERENT THAN 4 CORNERS SHOWED UP!: " << mesh_adaptor.corners.size() << std::endl;
+	
+
 
 	//for each vertex in our original mesh
 	//for (vertex_iterator_m vit = m.vertices_begin(); vit != m.vertices_end(); ++vit){
 		//and for each corner of this original mesh
-
 		//std::cout << vit->id() << std::endl;
 	//	for (std::vector<int>::iterator it = m.corners.begin(); it != m.corners.end(); ++it){
 			//if this vertex is one of the corners (check by id)
@@ -317,9 +410,7 @@ Parameterization_polyhedron_adaptor meshes::parameterize_mesh(Polyhedron & m){
 					//}}}}}
 
 
-	if (mesh_adaptor.corners.size() != 4){
-		std::cout << "DIFFERENT THAN 4 CORNERS SHOWED UP!: " <<mesh_adaptor.corners.size() << std::endl;
-	}
+
 
 
 
@@ -329,11 +420,8 @@ Parameterization_polyhedron_adaptor meshes::parameterize_mesh(Polyhedron & m){
 	//std::cout << "Mesh corners: ";
 	//for (std::vector<int>::iterator ait = mesh_adaptor.corners.begin(); ait != mesh_adaptor.corners.end(); ++ait)
 	//	std::cout << *ait << ", ";
-
 	//std::cout << std::endl;
 	//mesh_adaptor.corners_id.push_back(3);
-
-
 	// we need to set the corners
 
 	// Parameterize our mesh according to Parameterizer specs
@@ -356,6 +444,25 @@ Parameterization_polyhedron_adaptor meshes::parameterize_mesh(Polyhedron & m){
 		//return EXIT_FAILURE;
 		break;
 	};
+
+
+	std::cout << "The output works inside of parameterize_mesh() " << std::endl;
+	// Raw output: dump (u,v) pairs
+	Polyhedron::Vertex_const_iterator pVertex;
+	for (pVertex = m.vertices_begin();
+		pVertex != m.vertices_end();
+		pVertex++)
+	{
+		// (u,v) pair is stored in any halfedge
+		double u = mesh_adaptor.info(pVertex->halfedge())->uv().x();
+		double v = mesh_adaptor.info(pVertex->halfedge())->uv().y();
+		//std::cout << "(u,v) = (" << u << "," << v << ")" << std::endl;
+	}
+
+
+
+
+
 
 	return mesh_adaptor;
 }
@@ -415,9 +522,6 @@ int print_vertices_of_mesh(Polyhedron& mesh);
 
 bool isin(int item, std::set<int> keys);
 bool isin(vertex_descriptor_mesh vit, std::set<vertex_descriptor_mesh> sep);
-
-
-
 
 int create_frame(Frame &frame);
 

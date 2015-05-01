@@ -1,6 +1,5 @@
 # UROP-MRI
 
-####Disclaimer:  
 This is a work in progress and will be used more as a place to collect my thoughts than as an intro to the project.  
 
 
@@ -9,8 +8,6 @@ This project is to design and implement a shape analysis routine to provide quan
 I will identify and evaluate methods of sequential shape analysis, pilot multiple methods, and characterize the usefulness of the varied methods within the context of MR image analysis.  The goals are to develop a novel routine to analyze the sequential change in size and shape of subcutaneous region affected by Kinesio Tape. 
 
 This project will be the first quantitative study of the underlying mechanical affects of Kinesio Tape. Results could have large impact on the Kinesio Tape industry. Additionally, this study is expected to a provide general solution for quantitative assessment of morphological changes that could ultimately have broad implications for diagnostic and therapeutic outcomes beyond the current project.  
-
-Dr. Mileyko is advising and guiding me throughout this process.
 
 
 
@@ -27,8 +24,9 @@ Dr. Mileyko is advising and guiding me throughout this process.
 ##Implementation Details
 Most of the project is written in Python.
 
+ * All landmark based techniques are in the python directory
+ * Parameterization methods are handled by c++ in the cppp directory
  * General and Ordinary Procrustes Methods are handled by Procupy.
- * R is responsible for the Hotelling T2 testing (still in development)
 
 
 
